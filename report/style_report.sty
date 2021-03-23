@@ -1,0 +1,132 @@
+\RequirePackage{fontspec} % Use custom fonts on XeLaTeX
+\RequirePackage{scrhack} % Needed for koma-script classes
+\RequirePackage{ragged2e} % Justify with hyphenation
+\RequirePackage{scrlayer-scrpage}
+% \RequirePackage{showframe}
+\RequirePackage{multicol}
+\RequirePackage[table,usenames,dvipsnames]{xcolor}
+\RequirePackage{amsmath}
+\RequirePackage{nicefrac}
+
+\RequirePackage{graphicx}
+%\RequirePackage{tikz}
+%\usetikzlibrary{automata, positioning, arrows}
+
+\RequirePackage{tabu} % Tables
+\RequirePackage{booktabs}
+\RequirePackage{pifont} % Dingbats
+
+\RequirePackage{siunitx}
+\sisetup{range-phrase = \text{--}, detect-weight=true, detect-inline-weight=math}
+
+\RequirePackage{enumitem} % For better lists
+\RequirePackage{subcaption} % Multiple figures at once
+
+\RequirePackage[colorlinks,pdfusetitle]{hyperref}
+\RequirePackage[italian]{varioref}
+
+\RequirePackage{hologo}
+
+%------------------------------------------------
+%	Custom fields
+%------------------------------------------------
+\newcommand*{\projectno}[1]{\gdef\@projectno{#1}}
+\newcommand*{\@projectno}{1}
+\newcommand*{\referent}[1]{\gdef\@referent{#1}}
+\newcommand*{\@referent}{}
+
+
+%------------------------------------------------
+%	Font
+%------------------------------------------------
+% \setromanfont{MinionPro}
+\setsansfont[Ligatures=TeX]{HelveticaLTStd}
+\setmonofont{Courier New}
+\newcommand{\periodafter}[1]{#1.}
+
+%------------------------------------------------
+%	Symbols
+%------------------------------------------------
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+
+%------------------------------------------------
+%	Heading styles
+%------------------------------------------------
+\renewcommand*{\sectionformat}{\thesection .\enskip}
+
+\addtokomafont{disposition}{\sffamily}
+% \addtokomafont{part}{\fontseries{b}\selectfont}
+% \addtokomafont{chapter}{\fontseries{uk}\color{gray}\selectfont}
+% \addtokomafont{section}{\fontseries{ekc}\color{gray}\selectfont}
+% \addtokomafont{subsection}{\fontseries{kc}\selectfont}
+% \addtokomafont{subsubsection}{\fontseries{kc}\selectfont}
+
+%------------------------------------------------
+%	Area settings
+%------------------------------------------------
+% \storeareas\StandardArea % Margini standard
+% \KOMAoptions{paper=landscape, DIV=current, headinclude=false, footinclude=false}
+% \areaset{0.9\paperwidth}{\textheight}
+% \storeareas\LandscapeArea % Orientamento landscape, margini stretti
+
+% \StandardArea % Imposta margini standard
+
+%------------------------------------------------
+%	Headers and footers styles
+%------------------------------------------------
+% \pagestyle{scrheadings}
+% \KOMAoption{headsepline}{true}
+% \ohead{\sffamily\thepage}
+% \cfoot[]{}
+
+
+%------------------------------------------------
+%	Custom floats
+%------------------------------------------------
+\newcolumntype{L}{>{\RaggedRight\arraybackslash}X} % Left auto-adapt
+\newcolumntype{R}{>{\RaggedLeft\arraybackslash}X} % Right auto-adapt
+\newcolumntype{C}{>{\Centering\arraybackslash}X} % Centered auto-adapt
+
+% \newfloat{diagram}{htbp}{lod}[chapter]
+% \floatname{diagram}{Diagramma}
+% \newcommand*{\diagramautorefname}{Diagramma}
+
+
+%------------------------------------------------
+%	Caption settings
+%------------------------------------------------
+\KOMAoption{captions}{tableheading}
+\KOMAoption{captions}{figuresignature}
+\setkomafont{caption}{\small\sffamily\fontseries{l}\selectfont}
+\setkomafont{captionlabel}{\sffamily\bfseries}
+% \setcapindent{1em}
+
+%------------------------------------------------
+%	Label settings
+%------------------------------------------------
+\setkomafont{descriptionlabel}{\sffamily\bfseries}
+
+%------------------------------------------------
+%	Tikz settings
+%------------------------------------------------
+
+%------------------------------------------------
+%	Hyperref setup
+%------------------------------------------------
+\definecolor{accent}{HTML}{165889}
+\hypersetup{
+  colorlinks=true, linktocpage=true, pdfstartpage=1,
+  pdfstartview=FitB, breaklinks=true, pdfpagemode=UseNone,
+  pageanchor=true, pdfpagemode=UseOutlines,
+  plainpages=false, bookmarksnumbered,
+  bookmarksopen=true, bookmarksopenlevel=1,
+  hypertexnames=true, pdfhighlight=/O,
+  urlcolor=accent, linkcolor=accent,
+  citecolor=accent
+}
+
+%------------------------------------------------
+%	Listings settings
+%------------------------------------------------
+
