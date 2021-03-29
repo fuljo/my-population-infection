@@ -1,0 +1,47 @@
+services:
+  mpi_head:
+    image: my-population-infection
+    deploy:
+      replicas: 1
+    environment:
+      - IS_HEAD=1
+    ports: 
+      - "22"
+    links: 
+      - mpi_node
+    networks:
+      net:
+        aliases:
+          - mpi-head
+    volumes:
+      - type: bind
+        source: ./results
+        target: /home/mpirun/results
+    command: \
+      -N 100 \
+      -I 10 \
+      -W 10000 \
+      -L 3000 \
+      -w 5000 \
+      -l 1000 \
+      -v 7 \
+      -d 5 \
+      --t-infection=600 \
+      --t-recovery=3600 \
+      --t-immunity=10800 \
+      --sim-step=60 \
+      --sim-length=2
+
+  mpi_node:
+    build: .
+    image: my-population-infection
+    deploy:
+      replicas: 2
+    networks:
+      net:
+        aliases:
+          - mpi-node
+
+networks:
+  net:
+    driver: bridge
