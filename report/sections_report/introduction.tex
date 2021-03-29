@@ -73,8 +73,13 @@ The individuals will follow a linear motion with velocity $v$ (given in \si{m/s}
 If a subsceptible individual $i$ spends at least $t_{infection} = \SI{10}{min}$ at a distance $d_{ij}\leq d$ from an infected person $j$ it gets \emph{infected}, too.
 After being infected for $t_{recovery} = \SI{10}{day}$ a person will become \emph{immune}, so it can't be infected or infect others. It will become subsceptible again after further $t_{immunity} = \SI{39}{days}$.
 
-We only consider individuals in the same country when computing infections, in order to reduce the communication between processes. This means that if two individuals are closer than $d$ but in different countries, they won't be able to infect each other. This approximation should be acceptable in a realistic scenario where there are physical borders between countries and where $d$ is much smaller than the size of a country. We also don't move the list of "recent contacts" of an individual when it moves from one country to another, so the time spent close to other individuals is reset. The only reason for this is that we would need to move a variable amount of data for each individual, which is not practical with MPI. \todo{Discuss about this}
+We only consider individuals in the same country when computing infections, in order to reduce the communication between processes. This means that if two individuals are closer than $d$ but in different countries, they won't be able to infect each other. This approximation should be acceptable in a realistic scenario where there are physical borders between countries and where $d$ is much smaller than the size of a country. However the "infection timer" of an individual is not reset when passing the border.
 
 \paragraph{Simulation step}
-The position and status of each individual is computed with a granularity of $t$ seconds, with no interpolation inbetween.
-We compute periodic logs of the status of the population as soon as the end of each day has been surpassed, therefore we assume that $t \ll \SI{1}{day}$. Also, in a realistic scenario we should have $t \cdot v \ll w,l$ so that an individual cannot span a whole country in few steps.
+The position and status of each individual is computed with a granularity of $t_{step}$ seconds, with no interpolation inbetween.
+We compute periodic logs of the status of the population as soon as the end of each day has been surpassed, therefore we assume that $t_{step} \ll \SI{1}{day}$. Also, in a realistic scenario we should have $t_{step} \cdot v \ll w,l$ so that an individual cannot span a whole country in few steps.
+The simulation ends when
+\begin{enumerate*}[label=(\roman*)]
+    \item $t \geq t_{target}$, or
+    \item there are no infected people left
+\end{enumerate*}.
