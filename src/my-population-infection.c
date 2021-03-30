@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   printf("[INFO] Hello from node %d out of %d\n", rank, world_size);
 
   /* Read and parse command-line configuration */
-  if (rank == HEAD_RANK) {
+  if (rank == ROOT_RANK) {
     /* Define command-line options */
     struct argp_option options[] = {
         {0, 0, 0, 0, "Population options", 1},

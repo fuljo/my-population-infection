@@ -164,7 +164,8 @@ int validate_config(struct global_config *cfg, int world_size) {
  */
 void print_config(struct global_config *cfg) {
   printf(
-      "--------------------\nGlobal configuration\n--------------------\n num_individuals %lu\n "
+      "--------------------\nGlobal configuration\n--------------------\n "
+      "num_individuals %lu\n "
       "inf_individuals %lu\n world_w %lu\n world_l %lu\n country_w %lu\n "
       "country_l %lu\n velocity %f\n spreading_distance %f\n t_infection "
       "%lu\n t_recovery %lu\n t_immunity %lu\n t_step %lu\n t_target "

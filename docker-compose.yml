@@ -1,18 +1,18 @@
 services:
-  mpi_head:
+  mpi_root:
     image: my-population-infection
     deploy:
       replicas: 1
     environment:
-      - IS_HEAD=1
+      - IS_ROOT=1
     ports: 
       - "22"
     links: 
-      - mpi_node
+      - mpi_worker
     networks:
       net:
         aliases:
-          - mpi-head
+          - mpi-root
     volumes:
       - type: bind
         source: ./results
@@ -32,7 +32,7 @@ services:
       --sim-step=60 \
       --sim-length=2
 
-  mpi_node:
+  mpi_worker:
     build: .
     image: my-population-infection
     deploy:
@@ -40,7 +40,7 @@ services:
     networks:
       net:
         aliases:
-          - mpi-node
+          - mpi-worker
 
 networks:
   net:

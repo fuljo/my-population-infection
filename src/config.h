@@ -18,7 +18,7 @@ struct global_config {
   double velocity;
   double spreading_distance;
   unsigned long t_infection, t_recovery, t_immunity;
-  unsigned long t_step;      /* Simulation step in seconds */
+  unsigned long t_step;   /* Simulation step in seconds */
   unsigned long t_target; /* Stop simulation after this timestamp */
 };
 
@@ -45,14 +45,14 @@ int parse_opt(int key, char *arg, struct argp_state *state);
 
 /**
  * @brief Prints the configuration.
- * 
+ *
  * @param cfg configuration
  */
 void print_config(struct global_config *cfg);
 
 /**
  * @brief Validates the arguments and configuration in state->input.
- * 
+ *
  * @param state argp state at the end of parsing (ARGP_KEY_END)
  * @return int status
  */

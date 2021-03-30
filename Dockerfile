@@ -68,8 +68,8 @@ FROM openmpi AS my-population-infection
 USER mpirun
 ENV APP  my-population-infection
 
-ENV HEAD_HOSTNAME mpi-head
-ENV NODE_HOSTNAME mpi-node
+ENV ROOT_HOSTNAME mpi-root
+ENV WORKER_HOSTNAME mpi-worker
 
 WORKDIR /home/${USER}/
 
