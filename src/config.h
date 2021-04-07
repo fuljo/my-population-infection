@@ -8,6 +8,8 @@
 
 #include "utils.h"
 
+#define LOG_DEBUG 1
+
 #define T_INFECTION_DEFAULT 10 * MINUTE
 #define T_RECOVERY_DEFAULT 10 * DAY
 #define T_IMMUNITY_DEFAULT 3 * 30 * DAY
