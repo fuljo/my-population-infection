@@ -76,6 +76,10 @@ int parse_opt(int key, char *arg, struct argp_state *state) {
       cfg->t_target = strtoul(arg, NULL, 10) * DAY;
       break;
     }
+    case 888: {
+      cfg->rand_seed = arg ? strtoul(arg, NULL, 10) : time(NULL);
+      break;
+    }
     case ARGP_KEY_INIT: {
       a->argz = 0;
       a->argz_len = 0;
@@ -122,11 +126,13 @@ int validate_config(struct global_config *cfg, int world_size) {
     fprintf(stderr, "[ERR ] Country length must divide world length\n");
     return 1;
   }
-  unsigned long cols = cfg->world_w / cfg->country_w;
-  unsigned long rows = cfg->world_l / cfg->country_l;
-  if (world_size < rows + cols) {
-    fprintf(stderr, "[ERR ] Not enough processes. Expexted %lu, got %d\n",
-            rows + cols, world_size);
+  int num_countries =
+      (cfg->world_w / cfg->country_w) * (cfg->world_l / cfg->country_l);
+  if (world_size != num_countries) {
+    fprintf(stderr,
+            "[ERR ] Number of processes does not match number of countries. "
+            "Expected %d, got %d\n",
+            num_countries, world_size);
     return 1;
   }
   /* Velocity */

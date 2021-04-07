@@ -4,6 +4,7 @@
 #include <argz.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "utils.h"
 
@@ -20,6 +21,7 @@ struct global_config {
   unsigned long t_infection, t_recovery, t_immunity;
   unsigned long t_step;   /* Simulation step in seconds */
   unsigned long t_target; /* Stop simulation after this timestamp */
+  unsigned int rand_seed;
 };
 
 /* Argument parser structures */
