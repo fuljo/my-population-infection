@@ -29,14 +29,14 @@ We decide to assign each country to a separate MPI process to improve the regula
         };
     \end{tikzpicture}
     \end{subfigure}
-    \begin{subfigure}[c]{0.25\textwidth}
+    \begin{subfigure}[c]{0.29\textwidth}
     \begin{tikzpicture}
-        \draw[step=1.5] (-.25,-.25) grid (1.75,1.75);
-        \node           at (.75,.75) {$c$}; % center
-        \node[above]    at (.75,1.5) {$c + W$}; % north
-        \node[right]    at (1.5,.75) {$c + 1$}; % east
-        \node[below]    at (.75, 0 ) {$c - W$}; % south
-        \node[left]     at ( 0 ,.75) {$c - 1$}; % west
+        \draw[step=2] (-.25,-.25) grid (2.25,2.25);
+        \node           at (1,1) {$c$}; % center
+        \node[above]    at (1,2) {$c + \left\lfloor \frac{W}{w} \right\rfloor$}; % north
+        \node[right]    at (2,1) {$c + 1$}; % east
+        \node[below]    at (1,0) {$c - \left\lfloor \frac{W}{w} \right\rfloor$}; % south
+        \node[left]     at (0,1) {$c - 1$}; % west
     \end{tikzpicture}
     \end{subfigure}
     \caption{World subdivision into countries}
