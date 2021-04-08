@@ -9,7 +9,7 @@
  */
 MPI_Datatype create_type_mpi_global_config() {
   MPI_Datatype mpi_global_config;
-  struct global_config cfg;
+  global_config cfg;
   /**
    * We use three blocks:
    * - MPI_UNSIGNED_LONG (6 elements)

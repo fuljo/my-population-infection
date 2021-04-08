@@ -18,7 +18,7 @@ const char *argp_program_version = "0.1-alpha";
  */
 int parse_opt(int key, char *arg, struct argp_state *state) {
   struct arguments *a = state->input;
-  struct global_config *cfg = &a->config;
+  global_config *cfg = &a->config;
   /* Remove leading equal sign from the string */
   if (arg && arg[0] == '=') {
     arg++;
@@ -104,7 +104,7 @@ int parse_opt(int key, char *arg, struct argp_state *state) {
  * @param world_size number of MPI processes in world
  * @return int status (0: ok, 1: error)
  */
-int validate_config(struct global_config *cfg, int world_size) {
+int validate_config(global_config *cfg, int world_size) {
   /* Infected */
   if (cfg->inf_individuals > cfg->num_individuals) {
     fprintf(stderr,
@@ -168,7 +168,7 @@ int validate_config(struct global_config *cfg, int world_size) {
  *
  * @param cfg configuration
  */
-void print_config(struct global_config *cfg) {
+void print_config(global_config *cfg) {
   printf(
       "--------------------\nGlobal configuration\n--------------------\n "
       "num_individuals %lu\n "

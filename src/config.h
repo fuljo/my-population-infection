@@ -15,7 +15,7 @@
 #define T_IMMUNITY_DEFAULT 3 * 30 * DAY
 
 /* Configuration parameters */
-struct global_config {
+typedef struct {
   unsigned long num_individuals, inf_individuals;
   unsigned long world_w, world_l, country_w, country_l;
   double velocity;
@@ -24,11 +24,11 @@ struct global_config {
   unsigned long t_step;   /* Simulation step in seconds */
   unsigned long t_target; /* Stop simulation after this timestamp */
   unsigned int rand_seed;
-};
+} global_config;
 
 /* Argument parser structures */
 struct arguments {
-  struct global_config config;
+  global_config config;
   char *argz;
   size_t argz_len;
 };
@@ -52,7 +52,7 @@ int parse_opt(int key, char *arg, struct argp_state *state);
  *
  * @param cfg configuration
  */
-void print_config(struct global_config *cfg);
+void print_config(global_config *cfg);
 
 /**
  * @brief Validates the arguments and configuration in state->input.
@@ -60,4 +60,4 @@ void print_config(struct global_config *cfg);
  * @param state argp state at the end of parsing (ARGP_KEY_END)
  * @return int status
  */
-int validate_config(struct global_config *cfg, int world_size);
+int validate_config(global_config *cfg, int world_size);
