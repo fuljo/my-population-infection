@@ -1,3 +1,5 @@
+#include "log.h"
+
 #pragma once
 
 #define SECOND 1

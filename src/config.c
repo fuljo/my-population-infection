@@ -5,6 +5,34 @@ const char *argp_program_bug_address = "alessandro.fulgini@mail.polimi.it";
 const char *argp_program_version = "0.1-alpha";
 
 /**
+ * @brief Decodes log level code from string
+ *
+ * @param arg[in] log level string, case-insensitive, not null
+ * @return int log level code, -1 if unknown
+ */
+int decode_log_level(char *arg) {
+  if (strncasecmp(arg, "TRACE", 5) == 0) {
+    return LOG_TRACE;
+  }
+  if (strncasecmp(arg, "DEBUG", 5) == 0) {
+    return LOG_DEBUG;
+  }
+  if (strncasecmp(arg, "INFO", 5) == 0) {
+    return LOG_INFO;
+  }
+  if (strncasecmp(arg, "WARN", 5) == 0) {
+    return LOG_WARN;
+  }
+  if (strncasecmp(arg, "ERROR", 5) == 0) {
+    return LOG_ERROR;
+  }
+  if (strncasecmp(arg, "FATAL", 5) == 0) {
+    return LOG_FATAL;
+  }
+  return -1;
+}
+
+/**
  * @brief Handler for argp options and arguments.
  *
  * It fills in the global configuration in state->input->config with the
@@ -80,6 +108,14 @@ int parse_opt(int key, char *arg, struct argp_state *state) {
       cfg->rand_seed = arg ? strtoul(arg, NULL, 10) : time(NULL);
       break;
     }
+    case 999: {
+      if (arg == NULL || strlen(arg) == 0) {
+        cfg->log_level = LOG_DEFAULT;
+      } else {
+        cfg->log_level = decode_log_level(arg);
+      }
+      break;
+    }
     case ARGP_KEY_INIT: {
       a->argz = 0;
       a->argz_len = 0;
@@ -98,7 +134,20 @@ int parse_opt(int key, char *arg, struct argp_state *state) {
 }
 
 /**
- * @brief Validates configuration and prints error to stderr.
+ * @brief Initialize configuration with default values
+ *
+ * @param cfg[out] configuration to be initialized
+ */
+void init_config_default(global_config *cfg) {
+  cfg->t_infection = T_INFECTION_DEFAULT;
+  cfg->t_recovery = T_RECOVERY_DEFAULT;
+  cfg->t_immunity = T_IMMUNITY_DEFAULT;
+  cfg->rand_seed = time(NULL);
+  cfg->log_level = LOG_DEFAULT;
+}
+
+/**
+ * @brief Validates configuration and logs any errors.
  *
  * @param cfg global configuration
  * @param world_size number of MPI processes in world
@@ -107,54 +156,50 @@ int parse_opt(int key, char *arg, struct argp_state *state) {
 int validate_config(global_config *cfg, int world_size) {
   /* Infected */
   if (cfg->inf_individuals > cfg->num_individuals) {
-    fprintf(stderr,
-            "[ERR ] Infected individuals exceed population size (%lu > %lu)\n",
+    log_error("Infected individuals exceed population size (%lu > %lu)",
             cfg->inf_individuals, cfg->num_individuals);
     return 1;
   }
   /* World dimensions */
   if (cfg->world_w < cfg->country_w || cfg->world_l < cfg->country_l) {
-    fprintf(stderr,
-            "[ERR ] Country dimensions cannot exceed world dimensions\n");
+    log_error("Country dimensions cannot exceed world dimensions");
     return 1;
   }
   if (cfg->world_w % cfg->country_w != 0) {
-    fprintf(stderr, "[ERR ] Country width must divide world width\n");
+    log_error("Country width must divide world width");
     return 1;
   }
   if (cfg->world_l % cfg->country_l != 0) {
-    fprintf(stderr, "[ERR ] Country length must divide world length\n");
+    log_error("Country length must divide world length");
     return 1;
   }
   int num_countries =
       (cfg->world_w / cfg->country_w) * (cfg->world_l / cfg->country_l);
   if (world_size != num_countries) {
-    fprintf(stderr,
-            "[ERR ] Number of processes does not match number of countries. "
-            "Expected %d, got %d\n",
+    log_error("Number of processes does not match number of countries. "
+            "Expected %d, got %d",
             num_countries, world_size);
     return 1;
   }
   /* Velocity */
   if (cfg->velocity <= 0.) {
-    fprintf(stderr, "[ERR ] Velocity must be non-negative\n");
+    log_error("Velocity must be non-negative");
     return 1;
   }
   /* Spreading distance */
   if (cfg->spreading_distance <= 0.) {
-    fprintf(stderr, "[ERR ] Spreading distance must be non-negative\n");
+    log_error("Spreading distance must be non-negative");
     return 1;
   }
   /* Simulation step */
   if (cfg->t_step > DAY) {
-    fprintf(stderr, "[ERR ] Simulation step cannot be longer than one day\n");
+    log_error("Simulation step cannot be longer than one day");
     return 1;
   }
   /* Relation between movement and time step */
   if (cfg->t_step * cfg->velocity > MIN(cfg->country_w, cfg->country_l)) {
-    fprintf(stderr,
-            "[ERR ] The movement at each step is larger than a country: t * v "
-            "= %f > %lu\n",
+    log_error("The movement at each step is larger than a country: t * v "
+            "= %f > %lu",
             cfg->t_step * cfg->velocity, MIN(cfg->country_w, cfg->country_l));
     return 1;
   }
@@ -175,9 +220,9 @@ void print_config(global_config *cfg) {
       "inf_individuals %lu\n world_w %lu\n world_l %lu\n country_w %lu\n "
       "country_l %lu\n velocity %f\n spreading_distance %f\n t_infection "
       "%lu\n t_recovery %lu\n t_immunity %lu\n t_step %lu\n t_target "
-      "%lu\n--------------------\n",
+      "%lu\n rand_seed %u\n log_level %s\n--------------------\n",
       cfg->num_individuals, cfg->inf_individuals, cfg->world_w, cfg->world_l,
       cfg->country_w, cfg->country_l, cfg->velocity, cfg->spreading_distance,
       cfg->t_infection, cfg->t_recovery, cfg->t_immunity, cfg->t_step,
-      cfg->t_target);
+      cfg->t_target, cfg->rand_seed, log_level_string(cfg->log_level));
 }

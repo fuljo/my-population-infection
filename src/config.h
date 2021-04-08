@@ -8,7 +8,7 @@
 
 #include "utils.h"
 
-#define LOG_DEBUG 1
+#define LOG_DEFAULT LOG_DEBUG
 
 #define T_INFECTION_DEFAULT 10 * MINUTE
 #define T_RECOVERY_DEFAULT 10 * DAY
@@ -24,6 +24,7 @@ typedef struct {
   unsigned long t_step;   /* Simulation step in seconds */
   unsigned long t_target; /* Stop simulation after this timestamp */
   unsigned int rand_seed;
+  int log_level;
 } global_config;
 
 /* Argument parser structures */
@@ -46,6 +47,13 @@ struct arguments {
  * @return int status
  */
 int parse_opt(int key, char *arg, struct argp_state *state);
+
+/**
+ * @brief Initialize configuration with default values
+ *
+ * @param cfg[out] configuration to be initialized
+ */
+void init_config_default(global_config *cfg);
 
 /**
  * @brief Prints the configuration.

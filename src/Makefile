@@ -2,13 +2,16 @@ CC = mpicc
 CFLAGS = -std=gnu11 -g -Wall
 
 exec = my-population-infection
-objects = my-population-infection.o config.o mpi-datatypes.o world.o
+objects = my-population-infection.o config.o mpi-datatypes.o world.o log.o
 
 $(exec): $(objects)
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 config.o: config.c config.h utils.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+log.o: log.c log.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -DLOG_USE_COLOR -c $< -o $@
 
 mpi-datatypes.o: mpi-datatypes.c mpi-datatypes.h config.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@

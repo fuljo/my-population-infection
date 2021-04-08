@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   int world_size, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  printf("[INFO] Hello from node %d out of %d\n", rank, world_size);
+  log_info("Hello from node %d out of %d", rank, world_size);
 
   /* Create custom MPI datatypes */
   MPI_Datatype mpi_global_config = create_type_mpi_global_config();
@@ -58,6 +58,9 @@ int main(int argc, char **argv) {
         {"sim-length", 777, "INT", 0, "Length of the simulation in days"},
         {"rand-seed", 888, "INT", OPTION_ARG_OPTIONAL,
          "Seed for PRNG. By default initialized to time(0)"},
+        {0, 0, 0, 0, "Logging options", 5},
+        {"log-level", 999, "[TRACE|DEBUG|INFO|WARN|ERROR|FATAL]", 0,
+         "Logging level"},
         {0},
     };
     /* Define program description */
@@ -66,6 +69,7 @@ int main(int argc, char **argv) {
 
     /* Read command-line options and arguments */
     struct arguments arguments;
+    init_config_default(&arguments.config);
     if (argp_parse(&argp, argc, argv, 0, 0, &arguments) == 0) {
       const char *prev = NULL;
       char *word;
@@ -77,7 +81,7 @@ int main(int argc, char **argv) {
       free(arguments.argz);
     } else {
       MPI_Finalize();
-      fprintf(stderr, "[ERR ] Error while parsing CLI arguments\n");
+      log_error("Error while parsing CLI arguments\n");
       return 1;
     }
 
@@ -117,14 +121,12 @@ int main(int argc, char **argv) {
     /* Receive the scattered values */
     MPI_Scatter(NULL, 0, NULL, &num_individuals, 1, MPI_UNSIGNED_LONG,
                 ROOT_RANK, MPI_COMM_WORLD);
-    MPI_Scatter(NULL, 0, NULL, &num_infected, 1, MPI_UNSIGNED_LONG,
-                ROOT_RANK, MPI_COMM_WORLD);
+    MPI_Scatter(NULL, 0, NULL, &num_infected, 1, MPI_UNSIGNED_LONG, ROOT_RANK,
+                MPI_COMM_WORLD);
   }
 
-  #if LOG_DEBUG
-    printf("[DBG ] Init %d -- individuals: %lu, infected: %lu\n", rank,
-          num_individuals, num_infected);
-  #endif
+  log_debug("Rank %d -- individuals=%lu, infected=%lu", rank,
+            num_individuals, num_infected);
 
   /* -------------------------------------------------------------------------*/
   /* Cleanup                                                           */
