@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
   MPI_Datatype mpi_global_config = create_type_mpi_global_config();
 
   /* Read and parse command-line configuration */
-  global_config cfg;
+  global_config_t cfg;
   if (rank == ROOT_RANK) {
     /* Define command-line options */
     struct argp_option options[] = {

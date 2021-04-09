@@ -25,11 +25,11 @@ typedef struct {
   unsigned long t_target; /* Stop simulation after this timestamp */
   unsigned int rand_seed;
   int log_level;
-} global_config;
+} global_config_t;
 
 /* Argument parser structures */
 struct arguments {
-  global_config config;
+  global_config_t config;
   char *argz;
   size_t argz_len;
 };
@@ -53,14 +53,14 @@ int parse_opt(int key, char *arg, struct argp_state *state);
  *
  * @param cfg[out] configuration to be initialized
  */
-void init_config_default(global_config *cfg);
+void init_config_default(global_config_t *cfg);
 
 /**
  * @brief Prints the configuration.
  *
  * @param cfg configuration
  */
-void print_config(global_config *cfg);
+void print_config(global_config_t *cfg);
 
 /**
  * @brief Validates the arguments and configuration in state->input.
@@ -68,4 +68,4 @@ void print_config(global_config *cfg);
  * @param state argp state at the end of parsing (ARGP_KEY_END)
  * @return int status
  */
-int validate_config(global_config *cfg, int world_size);
+int validate_config(global_config_t *cfg, int world_size);

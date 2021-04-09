@@ -46,7 +46,7 @@ int decode_log_level(char *arg) {
  */
 int parse_opt(int key, char *arg, struct argp_state *state) {
   struct arguments *a = state->input;
-  global_config *cfg = &a->config;
+  global_config_t *cfg = &a->config;
   /* Remove leading equal sign from the string */
   if (arg && arg[0] == '=') {
     arg++;
@@ -138,7 +138,7 @@ int parse_opt(int key, char *arg, struct argp_state *state) {
  *
  * @param cfg[out] configuration to be initialized
  */
-void init_config_default(global_config *cfg) {
+void init_config_default(global_config_t *cfg) {
   cfg->t_infection = T_INFECTION_DEFAULT;
   cfg->t_recovery = T_RECOVERY_DEFAULT;
   cfg->t_immunity = T_IMMUNITY_DEFAULT;
@@ -153,7 +153,7 @@ void init_config_default(global_config *cfg) {
  * @param world_size number of MPI processes in world
  * @return int status (0: ok, 1: error)
  */
-int validate_config(global_config *cfg, int world_size) {
+int validate_config(global_config_t *cfg, int world_size) {
   /* Infected */
   if (cfg->inf_individuals > cfg->num_individuals) {
     log_error("Infected individuals exceed population size (%lu > %lu)",
@@ -213,7 +213,7 @@ int validate_config(global_config *cfg, int world_size) {
  *
  * @param cfg configuration
  */
-void print_config(global_config *cfg) {
+void print_config(global_config_t *cfg) {
   printf(
       "--------------------\nGlobal configuration\n--------------------\n "
       "num_individuals %lu\n "

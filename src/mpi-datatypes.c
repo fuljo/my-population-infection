@@ -1,7 +1,7 @@
 #include "mpi-datatypes.h"
 
 /**
- * @brief Create the MPI version of the struct global config datatype.
+ * @brief Create the MPI version of the global_config_t datatype.
  *
  * The type is both created and committed, but needs to be freed after use.
  *
@@ -9,7 +9,7 @@
  */
 MPI_Datatype create_type_mpi_global_config() {
   MPI_Datatype mpi_global_config;
-  global_config cfg;
+  global_config_t cfg;
   /**
    * We use four blocks:
    * - MPI_UNSIGNED_LONG (6 elements)

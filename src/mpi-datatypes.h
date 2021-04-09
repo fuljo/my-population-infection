@@ -3,7 +3,7 @@
 #include "config.h"
 
 /**
- * @brief Create the MPI version of the struct global config datatype.
+ * @brief Create the MPI version of the global_config_t datatype.
  *
  * The type is both created and committed, but needs to be freed after use.
  *
