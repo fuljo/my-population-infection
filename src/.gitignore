@@ -1,6 +1,9 @@
 # Output ELF
 my-population-infection
 
+# Results directory
+results/
+
 # Prerequisites
 *.d
 

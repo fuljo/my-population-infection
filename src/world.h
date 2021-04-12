@@ -1,3 +1,4 @@
+#pragma once
 
 /**
  * @brief Uniformly distributes a population between countries.
