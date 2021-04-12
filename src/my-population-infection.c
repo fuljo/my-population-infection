@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
   srand(cfg.rand_seed + rank);
 
   /* Calculate the total number of countries */
-  unsigned int num_countries =
+  const unsigned int num_countries =
       (cfg.world_w / cfg.country_w) * (cfg.world_l / cfg.country_l);
 
   /* Create empty lists of individuals */
@@ -196,8 +196,8 @@ void initialize_individuals(global_config_t *cfg, int num_countries,
   }
 
   /* Initialize each individual */
-  unsigned long x_min = col * cfg->country_w;
-  unsigned long y_min = row * cfg->country_l;
+  const unsigned long x_min = col * cfg->country_w;
+  const unsigned long y_min = row * cfg->country_l;
   individual_t *ind;
   unsigned long id = initial_id;
   double theta;

@@ -3,7 +3,7 @@
 /**
  * @brief Returns a string representation of the given status code
  *
- * @param status
+ * @param[in] status
  * @return char*
  */
 char *individual_status_string(int status) {
@@ -24,7 +24,7 @@ char *individual_status_string(int status) {
 /**
  * @brief Print a human-readable representation of an individual
  *
- * @param ind individual
+ * @param[in] ind individual
  */
 void print_individual(individual_t *ind) {
   printf(
@@ -41,7 +41,7 @@ void print_individual(individual_t *ind) {
  * <tt>status = NOT_EXPOSED</tt>, <tt>t_status = 0</tt>.
  * The list pointer is uninitialized.
  *
- * @param id
+ * @param[in] id
  * @return individual_t
  */
 individual_t *create_individual(unsigned long id) {

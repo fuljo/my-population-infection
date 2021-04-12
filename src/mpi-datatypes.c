@@ -66,11 +66,7 @@ MPI_Datatype create_type_mpi_individual() {
       (size_t) & (ind.individuals) - (size_t) & (ind),
   };
   MPI_Datatype block_types[] = {
-      MPI_UNSIGNED_LONG,
-      MPI_DOUBLE,
-      MPI_INT,
-      MPI_UNSIGNED_LONG,
-      MPI_AINT,
+      MPI_UNSIGNED_LONG, MPI_DOUBLE, MPI_INT, MPI_UNSIGNED_LONG, MPI_AINT,
   };
   MPI_Type_create_struct(num_blocks, block_lengths, displacements, block_types,
                          &mpi_individual);

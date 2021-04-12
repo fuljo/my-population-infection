@@ -7,7 +7,7 @@ const char *argp_program_version = "0.1-alpha";
 /**
  * @brief Decodes log level code from string
  *
- * @param arg[in] log level string, case-insensitive, not null
+ * @param[in] arg log level string, case-insensitive, not null
  * @return int log level code, -1 if unknown
  */
 int decode_log_level(char *arg) {
@@ -39,9 +39,9 @@ int decode_log_level(char *arg) {
  * provided options and validates them at the end.
  * The arguments are instead encoded in the argz vector.
  *
- * @param key argp key of the current option / argument
- * @param arg string value of the option / argument
- * @param state argp state
+ * @param[in] key argp key of the current option / argument
+ * @param[in] arg string value of the option / argument
+ * @param[in,out] state argp state
  * @return int status
  */
 int parse_opt(int key, char *arg, struct argp_state *state) {
@@ -136,7 +136,7 @@ int parse_opt(int key, char *arg, struct argp_state *state) {
 /**
  * @brief Initialize configuration with default values
  *
- * @param cfg[out] configuration to be initialized
+ * @param[out] cfg configuration to be initialized
  */
 void init_config_default(global_config_t *cfg) {
   cfg->t_infection = T_INFECTION_DEFAULT;
@@ -149,15 +149,15 @@ void init_config_default(global_config_t *cfg) {
 /**
  * @brief Validates configuration and logs any errors.
  *
- * @param cfg global configuration
- * @param world_size number of MPI processes in world
+ * @param[in] cfg global configuration
+ * @param[in] world_size number of MPI processes in world
  * @return int status (0: ok, 1: error)
  */
 int validate_config(global_config_t *cfg, int world_size) {
   /* Infected */
   if (cfg->inf_individuals > cfg->num_individuals) {
     log_error("Infected individuals exceed population size (%lu > %lu)",
-            cfg->inf_individuals, cfg->num_individuals);
+              cfg->inf_individuals, cfg->num_individuals);
     return 1;
   }
   /* World dimensions */
@@ -176,9 +176,10 @@ int validate_config(global_config_t *cfg, int world_size) {
   int num_countries =
       (cfg->world_w / cfg->country_w) * (cfg->world_l / cfg->country_l);
   if (world_size != num_countries) {
-    log_error("Number of processes does not match number of countries. "
-            "Expected %d, got %d",
-            num_countries, world_size);
+    log_error(
+        "Number of processes does not match number of countries. "
+        "Expected %d, got %d",
+        num_countries, world_size);
     return 1;
   }
   /* Velocity */
@@ -198,9 +199,10 @@ int validate_config(global_config_t *cfg, int world_size) {
   }
   /* Relation between movement and time step */
   if (cfg->t_step * cfg->velocity > MIN(cfg->country_w, cfg->country_l)) {
-    log_error("The movement at each step is larger than a country: t * v "
-            "= %f > %lu",
-            cfg->t_step * cfg->velocity, MIN(cfg->country_w, cfg->country_l));
+    log_error(
+        "The movement at each step is larger than a country: t * v "
+        "= %f > %lu",
+        cfg->t_step * cfg->velocity, MIN(cfg->country_w, cfg->country_l));
     return 1;
   }
 
@@ -211,7 +213,7 @@ int validate_config(global_config_t *cfg, int world_size) {
 /**
  * @brief Prints the configuration.
  *
- * @param cfg configuration
+ * @param[in] cfg configuration
  */
 void print_config(global_config_t *cfg) {
   printf(
