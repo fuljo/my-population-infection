@@ -12,7 +12,7 @@ RUN apt-get update -y && \
     apt-get install -y --no-install-recommends sudo apt-utils && \
     apt-get install -y --no-install-recommends openssh-server dnsutils \
         build-essential gcc gfortran binutils \
-        libopenmpi-dev openmpi-bin openmpi-common openmpi-doc && \
+        libopenmpi-dev && \
     apt-get clean && apt-get purge && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN mkdir /var/run/sshd

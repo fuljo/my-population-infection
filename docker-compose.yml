@@ -18,8 +18,8 @@ services:
         source: ./results
         target: /home/mpirun/results
     command: \
-      -N 100 \
-      -I 10 \
+      -N 10000 \
+      -I 100 \
       -W 10000 \
       -L 3000 \
       -w 5000 \
@@ -29,11 +29,10 @@ services:
       --t-infection=600 \
       --t-recovery=3600 \
       --t-immunity=10800 \
-      --sim-step=60 \
+      --sim-step=1 \
       --sim-length=2
 
   mpi_worker:
-    build: .
     image: my-population-infection
     deploy:
       replicas: 2
@@ -41,6 +40,10 @@ services:
       net:
         aliases:
           - mpi-worker
+    volumes:
+      - type: bind
+        source: ./results
+        target: /home/mpirun/results
 
 networks:
   net:
