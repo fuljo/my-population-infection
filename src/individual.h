@@ -41,4 +41,21 @@ individual_t *create_individual(unsigned long id);
 
 individual_list_t create_individual_list();
 
-#define insert_individual(head, ind) SLIST_INSERT_HEAD(head, ind, individuals)
+#define INDIVIDUAL_DISTANCE(ind1, ind2)      \
+  sqrt(pow(ind1->pos[0] - ind2->pos[0], 2) + \
+       pow(ind1->pos[1] - ind2->pos[1], 2))
+
+#define INDIVIDUAL_INSERT(head, ind) SLIST_INSERT_HEAD(head, ind, individuals)
+
+#define INDIVIDUAL_FIRST(head) SLIST_FIRST(head)
+
+#define INDIVIDUAL_NEXT(ind) SLIST_NEXT(ind, individuals)
+
+#define INDIVIDUAL_FOREACH(var, head) SLIST_FOREACH(var, head, individuals)
+
+#define INDIVIDUAL_REMOVE_HEAD(head) SLIST_REMOVE_HEAD(head, individuals)
+
+#define INDIVIDUAL_REMOVE_AFTER(ind) SLIST_REMOVE_AFTER(ind, individuals)
+
+#define INDIVIDUAL_REMOVE(head, ind) \
+  SLIST_REMOVE(head, ind, individual, individuals)

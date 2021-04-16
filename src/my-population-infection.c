@@ -16,6 +16,15 @@ void initialize_individuals(global_config_t *cfg, int num_countries,
                             individual_list_t *subsceptible_individuals,
                             individual_list_t *infected_individuals);
 
+void update_exposure(double spreading_distance,
+                     individual_list_t *subsceptible_individuals,
+                     individual_list_t *infected_individuals);
+
+void update_status(global_config_t *cfg,
+                   individual_list_t *subsceptible_individuals,
+                   individual_list_t *infected_individuals,
+                   individual_list_t *immune_individuals);
+
 int main(int argc, char **argv) {
   /* -------------------------------------------------------------------------*/
   /* Initialization                                                           */
@@ -123,6 +132,21 @@ int main(int argc, char **argv) {
                          &infected_individuals);
 
   /* -------------------------------------------------------------------------*/
+  /* Main loop                                                                */
+  /* -------------------------------------------------------------------------*/
+  FILE *detail_csv = create_detail_csv("./results", rank);
+  for (unsigned long t = 0; t < cfg.t_target; t += cfg.t_step) {
+    log_info("Rank %d -- t = %lu", rank, t);
+    /* Update exposure of subsceptible individuals */
+    update_exposure(cfg.spreading_distance, &subsceptible_individuals,
+                    &infected_individuals);
+
+    /* Update the status of all individuals based on t_status and move them
+       into the correct list */
+    update_status(&cfg, &subsceptible_individuals, &infected_individuals,
+                  &immune_individuals);
+  }
+  /* -------------------------------------------------------------------------*/
   /* Cleanup                                                                  */
   /* -------------------------------------------------------------------------*/
   MPI_Type_free(&mpi_global_config);
@@ -143,11 +167,11 @@ int main(int argc, char **argv) {
  *
  * They are inserted in the correct list according to their status.
  *
- * @param cfg[in] global configuration
- * @param num_countries[in] number of countries
- * @param subsceptible_individuals[out] head of the list where \c NOT_EXPOSED
+ * @param[in] cfg global configuration
+ * @param[in] num_countries number of countries
+ * @param[out] subsceptible_individuals  head of the list where \c NOT_EXPOSED
  * individuals will be inserted
- * @param infected_individuals[out] head of the list where \c INFECTED
+ * @param[out] infected_individuals  head of the list where \c INFECTED
  * individuals will be inserted
  */
 void initialize_individuals(global_config_t *cfg, int num_countries,
@@ -219,7 +243,7 @@ void initialize_individuals(global_config_t *cfg, int num_countries,
 
     /* Not infected */
     ind->status = NOT_EXPOSED;
-    insert_individual(subsceptible_individuals, ind);
+    INDIVIDUAL_INSERT(subsceptible_individuals, ind);
 
     id++;
   }
@@ -236,12 +260,149 @@ void initialize_individuals(global_config_t *cfg, int num_countries,
     /* Set status and insert into correct list */
     if (num_infected > 0 && id % num_infected == 0) {
       ind->status = INFECTED;
-      insert_individual(infected_individuals, ind);
+      INDIVIDUAL_INSERT(infected_individuals, ind);
     } else {
       ind->status = NOT_EXPOSED;
-      insert_individual(subsceptible_individuals, ind);
+      INDIVIDUAL_INSERT(subsceptible_individuals, ind);
     }
 
     id++;
+  }
+}
+
+/**
+ * @brief Compute the exposure status of subsceptible individuals
+ *
+ * @pre All subsceptible individuals have <tt>status = NOT_EXPOSED<\tt>
+ * @post Each subsceptible individual is flagged as \c EXPOSED if there is at
+ * least one \c INFECTED individual in a \c spreading_distance radius from him;
+ * otherwise it remains \c NOT_EXPOSED . No items are inserted or removed from
+ * the lists.
+ *
+ * @param[in] spreading_distance inclusive distance to be considered exposed
+ * @param[in,out] subsceptible_individuals list of all subsceptible individuals
+ * @param[in] infected_individuals list of all infected individuals
+ */
+void update_exposure(double spreading_distance,
+                     individual_list_t *subsceptible_individuals,
+                     individual_list_t *infected_individuals) {
+  individual_t *i, *j;
+  /* We check each subsceptible individual against infected individual */
+  INDIVIDUAL_FOREACH(i, subsceptible_individuals) {
+    INDIVIDUAL_FOREACH(j, infected_individuals) {
+      if (INDIVIDUAL_DISTANCE(i, j) <= spreading_distance) {
+        /* As soon as one match is found, we can go on to the next i */
+        i->status = EXPOSED;
+        break;
+      }
+    }
+  }
+}
+
+/**
+ * @brief Updates the status of each individual in the given lists and moves it
+ * to the correct list
+ *
+ * @pre All indivuduals are in the correct list according to their status.
+ * All \c subsceptible_individuals that are actually exposed have
+ * <tt>status == EXPOSED</tt>
+ *
+ * @post All individuals are in the correct list according to their status.
+ * All \c subsceptible_individuals have \c status reset to \c EXPOSED.
+ * If the individual was \c NOT_EXPOSED , \c t_status is reset to zero.
+ * In all other cases \c t_status is incremented by \c t_step , except if there
+ * is a status change, where it is reset to zero.
+ *
+ * @param[in] cfg global configuration
+ * @param[in,out] subsceptible_individuals list of all subsceptible individuals
+ * @param[in,out] infected_individuals list of all infected individuals
+ * @param[in,out] immune_individuals list of all immune individuals
+ */
+void update_status(global_config_t *cfg,
+                   individual_list_t *subsceptible_individuals,
+                   individual_list_t *infected_individuals,
+                   individual_list_t *immune_individuals) {
+  /* Save the first element of each list, so we don't re-process elements that
+   * are inserted in the meantime */
+  individual_t *sub = INDIVIDUAL_FIRST(subsceptible_individuals);
+  individual_t *inf = INDIVIDUAL_FIRST(infected_individuals);
+  individual_t *imm = INDIVIDUAL_FIRST(immune_individuals);
+  individual_t *prev, *next;
+
+  /* Subsceptible -> Infected */
+  prev = NULL;
+  while (sub) {
+    next = INDIVIDUAL_NEXT(sub);
+    if (sub->status == EXPOSED) { /* EXPOSED */
+      sub->t_status += cfg->t_step;
+      if (sub->t_status >= cfg->t_infection) {
+        /* The individual becomes infected */
+        sub->status = INFECTED;
+        sub->t_status = 0;
+        /* Remove it from the current list */
+        if (prev) {
+          INDIVIDUAL_REMOVE_AFTER(prev);
+        } else {
+          INDIVIDUAL_REMOVE_HEAD(subsceptible_individuals);
+        }
+        /* Put it in the other list */
+        INDIVIDUAL_INSERT(infected_individuals, sub);
+      } else {
+        /* If we didn't move the current element, we can advance prev */
+        prev = sub;
+      }
+    } else { /* NOT_EXPOSED */
+      sub->t_status = 0;
+      prev = sub;
+    }
+    sub = next;
+  }
+
+  /* Infected -> Immune */
+  prev = NULL;
+  while (inf) {
+    next = INDIVIDUAL_NEXT(inf);
+    inf->t_status += cfg->t_step;
+    if (inf->t_status >= cfg->t_infection) {
+      /* The individual becomes immune */
+      inf->status = IMMUNE;
+      inf->t_status = 0;
+      /* Remove it from the current list */
+      if (prev) {
+        INDIVIDUAL_REMOVE_AFTER(prev);
+      } else {
+        INDIVIDUAL_REMOVE(infected_individuals, inf);
+      }
+      /* Put it in the other list */
+      INDIVIDUAL_INSERT(immune_individuals, inf);
+    } else {
+      /* If we didn't move the current element, we can advance prev */
+      prev = inf;
+    }
+    inf = next;
+  }
+
+  /* Immune -> Subsceptible */
+  prev = NULL;
+  while (imm) {
+    next = INDIVIDUAL_NEXT(imm);
+    imm->t_status += cfg->t_step;
+    if (imm->t_status >= cfg->t_immunity) {
+      /* The individual becomes immune */
+      imm->status = NOT_EXPOSED;
+      imm->t_status = 0;
+      /* Remove it from the current list */
+      if (prev) {
+        INDIVIDUAL_REMOVE_AFTER(prev);
+      } else {
+        INDIVIDUAL_REMOVE(immune_individuals, imm);
+      }
+      /* Put it in the other list */
+      INDIVIDUAL_INSERT(subsceptible_individuals, imm);
+    } else {
+      /* If we didn't move the current element, we can advance prev */
+      prev = imm;
+    }
+    imm = next;
   }
 }

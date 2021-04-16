@@ -17,3 +17,8 @@
 
 #define MAX(a, b) (a > b ? a : b)
 #define MIN(a, b) (a < b ? a : b)
+
+#define SLIST_REMOVE_AFTER(elm, field)                             \
+  do {                                                             \
+    (elm)->field.sle_next = (elm)->field.sle_next->field.sle_next; \
+  } while (0)
