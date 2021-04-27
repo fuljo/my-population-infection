@@ -25,6 +25,18 @@ void update_status(global_config_t *cfg,
                    individual_list_t *infected_individuals,
                    individual_list_t *immune_individuals);
 
+void update_position(global_config_t *cfg, individual_list_t *individuals,
+                     individual_list_t *gc_individuals,
+                     individual_t *migrated_out[], size_t migrated_out_len[],
+                     size_t migrated_out_capacity[], limits_t *limits,
+                     int neighbors[]);
+
+limits_t calculate_country_limits(global_config_t *cfg, int num_countries,
+                                  int rank);
+
+void calculate_neighbors(int neighbors[], global_config_t *cfg,
+                         int num_countries, int rank);
+
 int main(int argc, char **argv) {
   /* -------------------------------------------------------------------------*/
   /* Initialization                                                           */
@@ -121,11 +133,25 @@ int main(int argc, char **argv) {
   const unsigned int num_countries =
       (cfg.world_w / cfg.country_w) * (cfg.world_l / cfg.country_l);
 
+  /* Calculate country limits */
+  limits_t limits = calculate_country_limits(&cfg, num_countries, rank);
+  /* Calculate indices of neighbors (-1 if none) */
+  int neighbors[NEIGHBOR_COUNT];
+  calculate_neighbors(neighbors, &cfg, num_countries, rank);
+
   /* Create empty lists of individuals */
   individual_list_t subsceptible_individuals = create_individual_list();
   individual_list_t infected_individuals = create_individual_list();
   individual_list_t immune_individuals = create_individual_list();
   individual_list_t gc_individuals = create_individual_list(); /* recycle bin */
+
+  /* Create buffers to move individuals from/to neighbor countries */
+  individual_t *migrated_out[NEIGHBOR_COUNT] = {NULL};
+  individual_t *migrated_in[NEIGHBOR_COUNT] = {NULL};
+  size_t migrated_out_len[NEIGHBOR_COUNT] = {0};
+  size_t migrated_out_capacity[NEIGHBOR_COUNT] = {0};
+  size_t migrated_in_len[NEIGHBOR_COUNT] = {0};
+  size_t migrated_in_capacity[NEIGHBOR_COUNT] = {0};
 
   /* Distribute individuals between countries and initialize them */
   initialize_individuals(&cfg, num_countries, &subsceptible_individuals,
@@ -145,6 +171,18 @@ int main(int argc, char **argv) {
        into the correct list */
     update_status(&cfg, &subsceptible_individuals, &infected_individuals,
                   &immune_individuals);
+
+    /* Move the individuals according to the displacement, perform bouncing and
+     * populate the migrated_out buffers */
+    update_position(&cfg, &subsceptible_individuals, &gc_individuals,
+                    migrated_out, migrated_out_len, migrated_out_capacity,
+                    &limits, neighbors);
+    update_position(&cfg, &infected_individuals, &gc_individuals, migrated_out,
+                    migrated_out_len, migrated_out_capacity, &limits,
+                    neighbors);
+    update_position(&cfg, &immune_individuals, &gc_individuals, migrated_out,
+                    migrated_out_len, migrated_out_capacity, &limits,
+                    neighbors);
   }
   /* -------------------------------------------------------------------------*/
   /* Cleanup                                                                  */
@@ -404,5 +442,196 @@ void update_status(global_config_t *cfg,
       prev = imm;
     }
     imm = next;
+  }
+}
+
+/**
+ * @brief Updates the position of each individual in a list and moves
+ * individuals that exited the country to an outbound buffer
+ *
+ * @param[in] cfg global configuration
+ * @param[in,out] individuals list of individuals to be processed
+ * @param[in,out] gc_individuals list of garbage-collected individuals
+ * @param[in,out] migrated_out buffer indexed by cardinal point where to put
+ * outbound individuals, each position must be dynamically allocated
+ * @param[in,out] migrated_out_len currently used size of the buffer (in number
+ * of individuals) for each position
+ * @param[in,out] migrated_out_capacity current capacity of each position of the
+ * buffer
+ * @param[in] limits limits of the country
+ * @param[in] neighbors array of indinces of neighbor countries, one for each of
+ * the eight cardinal directions
+ */
+void update_position(global_config_t *cfg, individual_list_t *individuals,
+                     individual_list_t *gc_individuals,
+                     individual_t *migrated_out[], size_t migrated_out_len[],
+                     size_t migrated_out_capacity[], limits_t *limits,
+                     int neighbors[]) {
+  individual_t *ind, *prev, *next;
+
+  /* Out of bound flag: the bits are indexed according to cardinal_point_t */
+  unsigned char out_flag;
+
+  /* Cardinal point of the destination country */
+  int dest;
+
+  /* Iterate over the list */
+  ind = INDIVIDUAL_FIRST(individuals);
+  prev = NULL;
+  while (ind) {
+    out_flag = 0;
+    next = INDIVIDUAL_NEXT(ind);
+
+    /* Move of the given displacement */
+    ind->pos[0] += ind->displ[0];
+    ind->pos[1] += ind->displ[1];
+
+    /* Calculate residuals w.r.t the boundaries */
+    double res_xmin = ind->pos[0] - limits->xmin;
+    double res_xmax = ind->pos[0] - limits->xmax;
+    double res_ymin = ind->pos[1] - limits->ymin;
+    double res_ymax = ind->pos[1] - limits->ymax;
+
+    /* Check if out-of-bound horizontally */
+    if (res_xmin < 0) { /* West */
+      if (neighbors[WEST] < 0) {
+        /* Out of world => bounce */
+        ind->pos[0] += -2 * res_xmin;
+        ind->displ[0] = -ind->displ[0];
+      } else {
+        out_flag += 1 << WEST;
+      }
+    } else if (res_xmax >= 0) { /* East */
+      if (neighbors[EAST] < 0) {
+        /* Out of world => bounce */
+        ind->pos[0] += -2 * res_xmax;
+        ind->displ[0] = -ind->displ[0];
+      } else {
+        out_flag += 1 << EAST;
+      }
+    }
+
+    /* Check if out-of-bound vertically */
+    if (res_ymin < 0) { /* South */
+      if (neighbors[SOUTH] < 0) {
+        /* Out of world => bounce */
+        ind->pos[1] += -2 * res_ymin;
+        ind->displ[1] = -ind->displ[1];
+      } else {
+        out_flag += 1 << SOUTH;
+      }
+    } else if (res_ymax >= 0) { /* North */
+      if (neighbors[NORTH] < 0) {
+        /* Out of world => bounce */
+        ind->pos[1] += -2 * res_ymax;
+        ind->displ[1] = -ind->displ[1];
+      } else {
+        out_flag += 1 << NORTH;
+      }
+    }
+
+    /* Send out-of-bound individuals to another country */
+    if (out_flag) {
+      /* Determine destionation */
+      dest = decode_cardinal_point_flag(out_flag);
+      /* Remove from local list */
+      if (prev) {
+        INDIVIDUAL_REMOVE_AFTER(prev);
+      } else {
+        INDIVIDUAL_REMOVE_HEAD(individuals);
+      }
+      /* Copy to migration buffer */
+      DYN_ARRAY_APPEND(*ind, migrated_out[dest], migrated_out_len[dest],
+                       migrated_out_capacity[dest], individual_t);
+      /* Insert old list element into garbage collection list to be reused */
+      INDIVIDUAL_INSERT(gc_individuals, ind);
+    } else {
+      /* If we didn't remove the current element, we can advance prev */
+      prev = ind;
+    }
+
+    /* Prepare for next iteration */
+    ind = next;
+  }
+}
+
+/**
+ * @brief Calculate the min and max x and y values for a country.
+ *
+ * @param[in] cfg global configuration
+ * @param[in] num_countries total number of countries
+ * @param[in] rank rank of this country
+ * @return limits_t a struct with the calculated limits
+ */
+limits_t calculate_country_limits(global_config_t *cfg, int num_countries,
+                                  int rank) {
+  /* Determine row and column of this country */
+  int cols = (cfg->world_w / cfg->country_w);
+  int col = rank % cols;
+  int row = rank / cols;
+  /* Build the struct with the values */
+  limits_t limits = {
+      col * cfg->country_w,       /* xmin */
+      (col + 1) * cfg->country_w, /* xmax */
+      row * cfg->country_l,       /* ymin */
+      (row + 1) * cfg->country_l, /* ymax */
+  };
+  return limits;
+}
+
+/**
+ * @brief Calculates the indices of the neighbors of this country
+ *
+ * @param[out] neighbors array where the results will be stored
+ * @param[in] cfg global configuration
+ * @param[in] num_countries total number of countries
+ * @param[in] rank rank of this country
+ */
+void calculate_neighbors(int neighbors[], global_config_t *cfg,
+                         int num_countries, int rank) {
+  /* Determine row and column of this country */
+  int cols = (cfg->world_w / cfg->country_w);
+  int rows = (cfg->world_l / cfg->country_l);
+  int col = rank % cols;
+  int row = rank / cols;
+  /* Determine the indices */
+  if (row == 0) { /* bottom row */
+    neighbors[SOUTH_EAST] = -1;
+    neighbors[SOUTH] = -1;
+    neighbors[SOUTH_WEST] = -1;
+    neighbors[NORTH_EAST] = rank - cols - 1;
+    neighbors[NORTH] = rank - cols;
+    neighbors[NORTH_WEST] = rank - cols + 1;
+  } else if (row == rows - 1) { /* top row */
+    neighbors[SOUTH_EAST] = rank - cols - 1;
+    neighbors[SOUTH] = rank - cols;
+    neighbors[SOUTH_WEST] = rank - cols + 1;
+    neighbors[NORTH_EAST] = -1;
+    neighbors[NORTH] = -1;
+    neighbors[NORTH_WEST] = -1;
+  } else { /* internal row */
+    /* NOTE: _EAST and _WEST values are invalid if the country is on the
+     * vertical boundary, and will be corrected later in the code */
+    neighbors[SOUTH_EAST] = rank - cols - 1;
+    neighbors[SOUTH] = rank - cols;
+    neighbors[SOUTH_WEST] = rank - cols + 1;
+    neighbors[NORTH_EAST] = rank - cols - 1;
+    neighbors[NORTH] = rank - cols;
+    neighbors[NORTH_WEST] = rank - cols + 1;
+  }
+
+  if (col == 0) { /* first column */
+    neighbors[SOUTH_WEST] = -1;
+    neighbors[WEST] = -1;
+    neighbors[NORTH_WEST] = -1;
+    neighbors[EAST] = rank + 1;
+  } else if (col == cols - 1) { /* last column */
+    neighbors[NORTH_EAST] = -1;
+    neighbors[EAST] = -1;
+    neighbors[NORTH_EAST] = -1;
+    neighbors[WEST] = rank - 1;
+  } else { /* internal column */
+    neighbors[EAST] = rank - 1;
+    neighbors[EAST] = rank + 1;
   }
 }
