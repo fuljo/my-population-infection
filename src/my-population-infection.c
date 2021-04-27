@@ -123,8 +123,11 @@ int main(int argc, char **argv) {
     }
   }
 
+
   /* Broadcast the configuration to all processes */
   MPI_Bcast(&cfg, 1, mpi_global_config, 0, MPI_COMM_WORLD);
+  /* Set log level */
+  log_set_level(cfg.log_level);
   /* Initialize random number generator */
   /* NOTE: It is important to give variability between countries */
   srand(cfg.rand_seed + rank);
@@ -162,7 +165,7 @@ int main(int argc, char **argv) {
   /* -------------------------------------------------------------------------*/
   FILE *detail_csv = create_detail_csv("./results", rank);
   for (unsigned long t = 0; t < cfg.t_target; t += cfg.t_step) {
-    log_info("Rank %d -- t = %lu", rank, t);
+    log_debug("Rank %d -- t = %lu", rank, t);
     /* Update exposure of subsceptible individuals */
     update_exposure(cfg.spreading_distance, &subsceptible_individuals,
                     &infected_individuals);

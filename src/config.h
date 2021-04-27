@@ -8,7 +8,7 @@
 
 #include "utils.h"
 
-#define LOG_DEFAULT LOG_DEBUG
+#define LOG_DEFAULT LOG_INFO
 
 #define T_INFECTION_DEFAULT 10 * MINUTE
 #define T_RECOVERY_DEFAULT 10 * DAY
