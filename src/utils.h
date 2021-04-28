@@ -27,11 +27,17 @@
     (elm)->field.sle_next = (elm)->field.sle_next->field.sle_next; \
   } while (0)
 
+#define DYN_ARRAY_EXTEND(arr, target_len, capacity, type) \
+  if (target_len > capacity) {                            \
+    capacity = target_len + target_len % DYN_ARRAY_CHUNK; \
+    arr = realloc(arr, sizeof(type) * capacity);          \
+  }
+
 #define DYN_ARRAY_APPEND(elm, arr, len, capacity, type) \
   do {                                                  \
     if (len >= capacity) {                              \
       capacity += DYN_ARRAY_CHUNK;                      \
-      arr = realloc(arr, sizeof(type) * capacity);    \
+      arr = realloc(arr, sizeof(type) * capacity);      \
     }                                                   \
     arr[len] = elm;                                     \
     len++;                                              \

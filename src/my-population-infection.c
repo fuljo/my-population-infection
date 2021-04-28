@@ -11,10 +11,15 @@
 #include "utils.h"
 #include "world.h"
 
+/* MPI communication tags */
+#define MIGRATED_TAG 1
+
 /* Function prototypes */
 void initialize_individuals(global_config_t *cfg, int num_countries,
                             individual_list_t *subsceptible_individuals,
                             individual_list_t *infected_individuals);
+
+void free_individuals(individual_list_t *individuals);
 
 void update_exposure(double spreading_distance,
                      individual_list_t *subsceptible_individuals,
@@ -30,6 +35,25 @@ void update_position(global_config_t *cfg, individual_list_t *individuals,
                      individual_t *migrated_out[], size_t migrated_out_len[],
                      size_t migrated_out_capacity[], limits_t *limits,
                      int neighbors[]);
+
+void send_migrated_out(MPI_Request requests[], individual_t *migrated_out[],
+                       size_t migrated_out_len[], int neighbors[],
+                       MPI_Datatype mpi_individual);
+
+void receive_migrated_in(individual_t *migrated_in[], size_t migrated_in_len[],
+                         size_t migrated_in_capacity[], int neighbors[],
+                         MPI_Datatype mpi_individual);
+
+void integrate_migrated_in(individual_t *migrated_in[],
+                           size_t migrated_in_len[], int neighbors[],
+                           individual_list_t *subsceptible_individuals,
+                           individual_list_t *infected_individuals,
+                           individual_list_t *immune_individuals,
+                           individual_list_t *gc_individuals);
+
+void wait_all_requests(MPI_Request requests[], int neighbors[]);
+
+void free_migrated(individual_t *migrated[], int neighbors[]);
 
 limits_t calculate_country_limits(global_config_t *cfg, int num_countries,
                                   int rank);
@@ -123,7 +147,6 @@ int main(int argc, char **argv) {
     }
   }
 
-
   /* Broadcast the configuration to all processes */
   MPI_Bcast(&cfg, 1, mpi_global_config, 0, MPI_COMM_WORLD);
   /* Set log level */
@@ -138,7 +161,7 @@ int main(int argc, char **argv) {
 
   /* Calculate country limits */
   limits_t limits = calculate_country_limits(&cfg, num_countries, rank);
-  /* Calculate indices of neighbors (-1 if none) */
+  /* Calculate ranks of neighbors (-1 if none) */
   int neighbors[NEIGHBOR_COUNT];
   calculate_neighbors(neighbors, &cfg, num_countries, rank);
 
@@ -155,6 +178,7 @@ int main(int argc, char **argv) {
   size_t migrated_out_capacity[NEIGHBOR_COUNT] = {0};
   size_t migrated_in_len[NEIGHBOR_COUNT] = {0};
   size_t migrated_in_capacity[NEIGHBOR_COUNT] = {0};
+  MPI_Request send_requests[NEIGHBOR_COUNT];
 
   /* Distribute individuals between countries and initialize them */
   initialize_individuals(&cfg, num_countries, &subsceptible_individuals,
@@ -186,10 +210,35 @@ int main(int argc, char **argv) {
     update_position(&cfg, &immune_individuals, &gc_individuals, migrated_out,
                     migrated_out_len, migrated_out_capacity, &limits,
                     neighbors);
+
+    /* Send out migrated individuals */
+    send_migrated_out(send_requests, migrated_out, migrated_out_len, neighbors,
+                      mpi_individual);
+
+    /* Receive in migrated individuals and insert them into the local lists */
+    receive_migrated_in(migrated_in, migrated_in_len, migrated_in_capacity,
+                        neighbors, mpi_individual);
+    integrate_migrated_in(migrated_in, migrated_in_len, neighbors,
+                          &subsceptible_individuals, &infected_individuals,
+                          &immune_individuals, &gc_individuals);
+
+    /* Wait until all send requests have been completed */
+    wait_all_requests(send_requests, neighbors);
+    /* Reset the length of the migrated_out buffers */
+    memset(migrated_out_len, 0, NEIGHBOR_COUNT * sizeof(size_t));
   }
   /* -------------------------------------------------------------------------*/
   /* Cleanup                                                                  */
   /* -------------------------------------------------------------------------*/
+  fclose(detail_csv);
+
+  free_individuals(&subsceptible_individuals);
+  free_individuals(&infected_individuals);
+  free_individuals(&immune_individuals);
+  free_individuals(&gc_individuals);
+  free_migrated(migrated_in, neighbors);
+  free_migrated(migrated_out, neighbors);
+
   MPI_Type_free(&mpi_global_config);
   MPI_Finalize();
   return 0;
@@ -312,6 +361,21 @@ void initialize_individuals(global_config_t *cfg, int num_countries,
 }
 
 /**
+ * @brief Frees a dynamically allocated list of individuals
+ *
+ * @param individuals list of individuals
+ */
+void free_individuals(individual_list_t *individuals) {
+  individual_t *ind, *next;
+  ind = INDIVIDUAL_FIRST(individuals);
+  while (ind) {
+    next = INDIVIDUAL_NEXT(ind);
+    free(ind);
+    ind = next;
+  }
+}
+
+/**
  * @brief Compute the exposure status of subsceptible individuals
  *
  * @pre All subsceptible individuals have <tt>status = NOT_EXPOSED<\tt>
@@ -429,7 +493,7 @@ void update_status(global_config_t *cfg,
     next = INDIVIDUAL_NEXT(imm);
     imm->t_status += cfg->t_step;
     if (imm->t_status >= cfg->t_immunity) {
-      /* The individual becomes immune */
+      /* The individual becomes subsceptible again */
       imm->status = NOT_EXPOSED;
       imm->t_status = 0;
       /* Remove it from the current list */
@@ -556,6 +620,7 @@ void update_position(global_config_t *cfg, individual_list_t *individuals,
     /* Prepare for next iteration */
     ind = next;
   }
+}
 
 /**
  * @brief Calculate the min and max x and y values for a country.
@@ -628,5 +693,179 @@ void calculate_neighbors(int neighbors[], global_config_t *cfg,
     neighbors[NORTH_EAST] = -1;
     neighbors[EAST] = -1;
     neighbors[NORTH_EAST] = -1;
+  }
+}
+
+/**
+ * @brief Sends the individuals in the migrated_out buffers to the respective
+ * neighbors
+ *
+ * For each neighbor \c i s.t. <tt>neighbors[i] >= 0</tt> sends the first \c
+ * migrated_out_len[i] items of \c migrated_out[i] to \c neighbors[i] .
+ *
+ * A
+ * non-blocking send is performed and the resulting \c MPI_Request is placed in
+ * \c requests[i] ;  If <tt>neighbors[i] < 0</tt> \c requests[i] remains
+ * unchanged.
+ *
+ * The send is performed, and the request is set even if
+ * <tt>migrated_out_len[i] == 0</tt> to simplify the code that has to check the
+ * completion.
+ *
+ * All arrays in the parameters must have size \c NEIGHBORS_COUNT .
+ *
+ * @param[out] requests array of send requests, that will be filled while
+ * sending
+ * @param[in] migrated_out array of buffers with individuals to be migrated,
+ * indexed by cardinal direction
+ * @param[in] migrated_out_len lengths of \c migrated_out buffers (in number of
+ * individuals)
+ * @param[in] neighbors array of ranks of neighbors, indexed by cardinal
+ * direction
+ * @param[in] mpi_individual custom MPI datatype for sending individual_t
+ */
+void send_migrated_out(MPI_Request requests[], individual_t *migrated_out[],
+                       size_t migrated_out_len[], int neighbors[],
+                       MPI_Datatype mpi_individual) {
+  for (int i = 0; i < NEIGHBOR_COUNT; i++) {
+    if (neighbors[i] >= 0) {
+      MPI_Isend(migrated_out[i], migrated_out_len[i], mpi_individual,
+                neighbors[i], MIGRATED_TAG, MPI_COMM_WORLD, &requests[i]);
+    }
+  }
+}
+
+/**
+ * @brief Receives the migrated individuals from all of the neighbors and stores
+ * them into the migrated_in buffers
+ *
+ * For each neighbor \c i s.t. <tt>neighbors[i] >= 0</tt> receives all the
+ * individuals sent by the corresponding \c send_migrated_out() call and stores
+ * them in \c migrated_in[i] , overwriting any previous data. The number of
+ * received items is set in \c migrated_in_len[i] .
+ *
+ * If the \c migrated_in_capacity[i] is not sufficient to hold the new data, the
+ * buffer is extended and the value of \c migrated_in_capacity[i] is updated.
+ *
+ * @param[out] migrated_in array of buffers with received individuals, indexed
+ * by cardinal point
+ * @param[out] migrated_in_len lengths of \c migrated_in buffers (in number of
+ * individuals)
+ * @param[in,out] migrated_in_capacity capacities of the \c migrated_in buffers
+ * @param[in] neighbors array of ranks of neighbors, indexed by cardinal
+ * direction
+ * @param[in] mpi_individual custom MPI datatype for sending individual_t
+ */
+void receive_migrated_in(individual_t *migrated_in[], size_t migrated_in_len[],
+                         size_t migrated_in_capacity[], int neighbors[],
+                         MPI_Datatype mpi_individual) {
+  MPI_Status status;
+  for (int i = 0; i < NEIGHBOR_COUNT; i++) {
+    if (neighbors[i] >= 0) {
+      /* Query the number of received individuals */
+      MPI_Probe(neighbors[i], MIGRATED_TAG, MPI_COMM_WORLD, &status);
+      MPI_Get_count(&status, mpi_individual, (int *)&migrated_in_len[i]);
+      /* Extend the buffer if necessary */
+      DYN_ARRAY_EXTEND(migrated_in[i], migrated_in_len[i],
+                       migrated_in_capacity[i], individual_t);
+      /* Store the received items in the buffer */
+      MPI_Recv(migrated_in[i], migrated_in_len[i], mpi_individual, neighbors[i],
+               MIGRATED_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+  }
+}
+
+/**
+ * @brief Integrates the received individuals into the local lists
+ *
+ * The individuals in \c migrated_in , of any country, are inserted into the
+ * local lists according to their status.
+ *
+ * The received entries are copied from the \c migrated_in buffers onto
+ * dynamically allocated entries, in order to be able to reuse the buffers
+ * afterwards. If there are entries in \c gc_individuals , these will be used
+ * instead of allocating new memory.
+ *
+ * @param[in] migrated_in array of buffers with received individuals, indexed
+ * by cardinal point
+ * @param[in] migrated_in_len lengths of \c migrated_in buffers (in number of
+ * individuals)
+ * @param[in] neighbors array of ranks of neighbors, indexed by cardinal
+ * direction
+ * @param[in,out] subsceptible_individuals list of all subsceptible individuals
+ * @param[in,out] infected_individuals list of all infected individuals
+ * @param[in,out] immune_individuals list of all immune individuals
+ * @param[in,out] gc_individuals list of entries to be recycled
+ */
+void integrate_migrated_in(individual_t *migrated_in[],
+                           size_t migrated_in_len[], int neighbors[],
+                           individual_list_t *subsceptible_individuals,
+                           individual_list_t *infected_individuals,
+                           individual_list_t *immune_individuals,
+                           individual_list_t *gc_individuals) {
+  individual_t *ind;
+  for (int i = 0; i < NEIGHBOR_COUNT; i++) {
+    if (neighbors[i] >= 0) {                            /* for each neighbor */
+      for (size_t j = 0; j < migrated_in_len[i]; j++) { /* for each individ. */
+        /* Get the new list entry */
+        if (INDIVIDUAL_EMPTY(gc_individuals)) {
+          /* Allocate new memory */
+          ind = malloc(sizeof(individual_t));
+        } else {
+          /* Recycle the garbage-collected entry */
+          ind = INDIVIDUAL_FIRST(gc_individuals);
+          INDIVIDUAL_REMOVE_HEAD(gc_individuals);
+        }
+        /* Copy the received data */
+        *ind = migrated_in[i][j];
+        /* Insert into the correct list */
+        switch (ind->status) {
+          case NOT_EXPOSED:
+          case EXPOSED: {
+            INDIVIDUAL_INSERT(subsceptible_individuals, ind);
+            break;
+          }
+          case INFECTED: {
+            INDIVIDUAL_INSERT(infected_individuals, ind);
+            break;
+          }
+          case IMMUNE: {
+            INDIVIDUAL_INSERT(immune_individuals, ind);
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * @brief Waits on MPI requests and returns when all are completed.
+ *
+ * @param[in] requests array of requests, indexed by cardinal direction
+ * @param[in] neighbors array of ranks of neighbors, indexed by cardinal
+ * direction
+ */
+void wait_all_requests(MPI_Request requests[], int neighbors[]) {
+  for (int i = 0; i < NEIGHBOR_COUNT; i++) {
+    if (neighbors[i] >= 0) {
+      /* TODO: Check status */
+      MPI_Wait(&requests[i], MPI_STATUS_IGNORE);
+    }
+  }
+}
+
+/**
+ * @brief Frees the dynamically allocated buffers for migrated individuals
+ *
+ * @param migrated array of dynamically allocated buffers, indexed by cardinal
+ * point
+ * @param neighbors array of indices of neighbors, indexed by cardinal point
+ */
+void free_migrated(individual_t *migrated[], int neighbors[]) {
+  for (int i = 0; i < NEIGHBOR_COUNT; i++) {
+    if (neighbors[i] >= 0) {
+      free(migrated[i]);
+    }
   }
 }

@@ -47,6 +47,8 @@ individual_list_t create_individual_list();
 
 #define INDIVIDUAL_INSERT(head, ind) SLIST_INSERT_HEAD(head, ind, individuals)
 
+#define INDIVIDUAL_EMPTY(head) SLIST_EMPTY(head)
+
 #define INDIVIDUAL_FIRST(head) SLIST_FIRST(head)
 
 #define INDIVIDUAL_NEXT(ind) SLIST_NEXT(ind, individuals)
