@@ -116,6 +116,10 @@ int parse_opt(int key, char *arg, struct argp_state *state) {
       }
       break;
     }
+    case 101010: {
+      cfg->write_trace = true;
+      break;
+    }
     case ARGP_KEY_INIT: {
       a->argz = 0;
       a->argz_len = 0;
@@ -144,6 +148,7 @@ void init_config_default(global_config_t *cfg) {
   cfg->t_immunity = T_IMMUNITY_DEFAULT;
   cfg->rand_seed = time(NULL);
   cfg->log_level = LOG_DEFAULT;
+  cfg->write_trace = false;
 }
 
 /**
@@ -222,9 +227,11 @@ void print_config(global_config_t *cfg) {
       "inf_individuals %lu\n world_w %lu\n world_l %lu\n country_w %lu\n "
       "country_l %lu\n velocity %f\n spreading_distance %f\n t_infection "
       "%lu\n t_recovery %lu\n t_immunity %lu\n t_step %lu\n t_target "
-      "%lu\n rand_seed %u\n log_level %s\n--------------------\n",
+      "%lu\n rand_seed %u\n log_level %s\n write_trace "
+      "%d\n--------------------\n",
       cfg->num_individuals, cfg->inf_individuals, cfg->world_w, cfg->world_l,
       cfg->country_w, cfg->country_l, cfg->velocity, cfg->spreading_distance,
       cfg->t_infection, cfg->t_recovery, cfg->t_immunity, cfg->t_step,
-      cfg->t_target, cfg->rand_seed, log_level_string(cfg->log_level));
+      cfg->t_target, cfg->rand_seed, log_level_string(cfg->log_level),
+      cfg->write_trace);
 }

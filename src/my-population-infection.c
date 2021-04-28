@@ -100,20 +100,22 @@ int main(int argc, char **argv) {
         {"velocity", 'v', "FLOAT", 0, "Moving speed for and individual in m/s"},
         {"spreading-distance", 'd', "FLOAT", 0,
          "Maximum spreading distance in meters"},
-        {"t-infection", 333, "INT", OPTION_ARG_OPTIONAL,
+        {"t-infection", 333, "INT", 0,
          "Minimum continuous exposure time for getting infected"},
-        {"t-recovery", 444, "INT", OPTION_ARG_OPTIONAL,
-         "Time needed for recovering"},
-        {"t-immunity", 555, "INT", OPTION_ARG_OPTIONAL,
+        {"t-recovery", 444, "INT", 0, "Time needed for recovering"},
+        {"t-immunity", 555, "INT", 0,
          "Duration of immunity period after recovering"},
         {0, 0, 0, 0, "Simulation options", 4},
         {"sim-step", 666, "INT", 0, "Simulation step in seconds"},
         {"sim-length", 777, "INT", 0, "Length of the simulation in days"},
-        {"rand-seed", 888, "INT", OPTION_ARG_OPTIONAL,
+        {"rand-seed", 888, "INT", 0,
          "Seed for PRNG. By default initialized to time(0)"},
         {0, 0, 0, 0, "Logging options", 5},
         {"log-level", 999, "[TRACE|DEBUG|INFO|WARN|ERROR|FATAL]", 0,
          "Logging level"},
+        {"write-trace", 101010, "", OPTION_ARG_OPTIONAL,
+         "Write the file results/trace.csv with details about each individual "
+         "at each time step"},
         {0},
     };
     /* Define program description */
@@ -185,12 +187,15 @@ int main(int argc, char **argv) {
   initialize_individuals(&cfg, num_countries, &subsceptible_individuals,
                          &infected_individuals);
 
-  /* Open files for writing summary and details */
+  /* Open trace file */
+  FILE *trace_csv = NULL;
+  if (cfg.write_trace) {
+    trace_csv = create_trace_csv("./results", rank);
+  }
+
+  /* Prepare structures for summary */
   summary_t summary;
   FILE *summary_csv = NULL;
-  FILE *detail_csv = create_detail_csv("./results", rank);
-
-  /* If root, we also need to receive summaries and write them to file */
   summary_t *summaries = NULL;
   if (rank == ROOT_RANK) {
     summary_csv = create_summary_csv("./results");
@@ -201,7 +206,7 @@ int main(int argc, char **argv) {
   /* Main loop                                                                */
   /* -------------------------------------------------------------------------*/
   unsigned long t_last_summary = 0;
-  for (unsigned long t = 0; t < cfg.t_target; t += cfg.t_step) {
+  for (unsigned long t = 0; t_last_summary < cfg.t_target; t += cfg.t_step) {
     log_debug("Rank %d -- t = %lu", rank, t);
     /* Update exposure of subsceptible individuals */
     update_exposure(cfg.spreading_distance, &subsceptible_individuals,
@@ -235,6 +240,13 @@ int main(int argc, char **argv) {
                           &subsceptible_individuals, &infected_individuals,
                           &immune_individuals, &gc_individuals);
 
+    /* Write trace to file */
+    if (cfg.write_trace) {
+      trace_csv_write_step(trace_csv, &subsceptible_individuals, rank, t);
+      trace_csv_write_step(trace_csv, &infected_individuals, rank, t);
+      trace_csv_write_step(trace_csv, &immune_individuals, rank, t);
+    }
+
     /* Send summary if at the end of day */
     /* NOTE: At this point we have computed the situation at t+1 */
     if (t + 1 - t_last_summary >= DAY) {
@@ -264,6 +276,9 @@ int main(int argc, char **argv) {
   /* -------------------------------------------------------------------------*/
   /* Cleanup                                                                  */
   /* -------------------------------------------------------------------------*/
+  if (cfg.write_trace) {
+    fclose(trace_csv);
+  }
   if (rank == ROOT_RANK) {
     fclose(summary_csv);
   }

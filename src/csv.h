@@ -7,10 +7,10 @@
 #include "individual.h"
 #include "utils.h"
 
-FILE *create_detail_csv(char *directory, int country);
+FILE *create_trace_csv(char *directory, int country);
 
-void detail_csv_write_line(FILE *csv, individual_t *ind, int country,
-                           unsigned long t);
+void trace_csv_write_step(FILE *csv, individual_list_t *individuals,
+                          int country, unsigned long t);
 
 FILE *create_summary_csv(char *directory);
 

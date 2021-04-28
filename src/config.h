@@ -25,6 +25,7 @@ typedef struct {
   unsigned long t_target; /**< Stop simulation after this timestamp */
   unsigned int rand_seed;
   int log_level;
+  bool write_trace; /**< Write a file with details of each ind. at each step */
 } global_config_t;
 
 /* Argument parser structures */

@@ -15,10 +15,10 @@ MPI_Datatype create_type_mpi_global_config() {
    * - MPI_UNSIGNED_LONG (6 elements)
    * - MPI_DOUBLE (2 elements)
    * - MPI_UNSIGNED_LONG (9 elements)
-   * - MPI_INT (1 element)
+   * - MPI_INT (2 elements)
    */
   int num_blocks = 4;
-  const int block_lengths[] = {6, 2, 9, 1};
+  const int block_lengths[] = {6, 2, 9, 2};
   const MPI_Aint displacements[] = {
       0,
       (size_t) & (cfg.num_individuals) - (size_t) & (cfg),
