@@ -78,6 +78,7 @@ int main(int argc, char **argv) {
   /* Create custom MPI datatypes */
   MPI_Datatype mpi_global_config = create_type_mpi_global_config();
   MPI_Datatype mpi_individual = create_type_mpi_individual();
+  MPI_Datatype mpi_summary = create_type_mpi_summary();
 
   /* Read and parse command-line configuration */
   global_config_t cfg;
@@ -184,10 +185,22 @@ int main(int argc, char **argv) {
   initialize_individuals(&cfg, num_countries, &subsceptible_individuals,
                          &infected_individuals);
 
+  /* Open files for writing summary and details */
+  summary_t summary;
+  FILE *summary_csv = NULL;
+  FILE *detail_csv = create_detail_csv("./results", rank);
+
+  /* If root, we also need to receive summaries and write them to file */
+  summary_t *summaries = NULL;
+  if (rank == ROOT_RANK) {
+    summary_csv = create_summary_csv("./results");
+    summaries = malloc(world_size * sizeof(summary_t));
+  }
+
   /* -------------------------------------------------------------------------*/
   /* Main loop                                                                */
   /* -------------------------------------------------------------------------*/
-  FILE *detail_csv = create_detail_csv("./results", rank);
+  unsigned long t_last_summary = 0;
   for (unsigned long t = 0; t < cfg.t_target; t += cfg.t_step) {
     log_debug("Rank %d -- t = %lu", rank, t);
     /* Update exposure of subsceptible individuals */
@@ -222,6 +235,27 @@ int main(int argc, char **argv) {
                           &subsceptible_individuals, &infected_individuals,
                           &immune_individuals, &gc_individuals);
 
+    /* Send summary if at the end of day */
+    /* NOTE: At this point we have computed the situation at t+1 */
+    if (t + 1 - t_last_summary >= DAY) {
+      /* Prepare summary */
+      INDIVIDUAL_COUNT(&subsceptible_individuals, &summary.subsceptible);
+      INDIVIDUAL_COUNT(&infected_individuals, &summary.infected);
+      INDIVIDUAL_COUNT(&immune_individuals, &summary.immune);
+      /* Send summary to root */
+      MPI_Gather(&summary, 1, mpi_summary, summaries, 1, mpi_summary, ROOT_RANK,
+                 MPI_COMM_WORLD);
+      /* Write summary to file */
+      if (rank == ROOT_RANK) {
+        log_info("Writing summary of day %d", (int)(t_last_summary / DAY));
+        summary_csv_write_day(summary_csv, summaries, world_size,
+                              (int)(t_last_summary / DAY));
+        fflush(summary_csv);
+      }
+      /* Update time of last summary */
+      t_last_summary = t;
+    }
+
     /* Wait until all send requests have been completed */
     wait_all_requests(send_requests, neighbors);
     /* Reset the length of the migrated_out buffers */
@@ -230,7 +264,9 @@ int main(int argc, char **argv) {
   /* -------------------------------------------------------------------------*/
   /* Cleanup                                                                  */
   /* -------------------------------------------------------------------------*/
-  fclose(detail_csv);
+  if (rank == ROOT_RANK) {
+    fclose(summary_csv);
+  }
 
   free_individuals(&subsceptible_individuals);
   free_individuals(&infected_individuals);
@@ -238,8 +274,11 @@ int main(int argc, char **argv) {
   free_individuals(&gc_individuals);
   free_migrated(migrated_in, neighbors);
   free_migrated(migrated_out, neighbors);
+  free(summaries);
 
   MPI_Type_free(&mpi_global_config);
+  MPI_Type_free(&mpi_individual);
+  MPI_Type_free(&mpi_summary);
   MPI_Finalize();
   return 0;
 }

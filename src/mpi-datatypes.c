@@ -74,3 +74,31 @@ MPI_Datatype create_type_mpi_individual() {
 
   return mpi_individual;
 }
+
+/**
+ * @brief Create the MPI version of the summary_t datatype.
+ *
+ * The type is both created and committed, but needs to be freed after use.
+ *
+ * @return MPI_Datatype
+ */
+MPI_Datatype create_type_mpi_summary() {
+  MPI_Datatype mpi_summary;
+  /**
+   * We use one block:
+   * - MPI_UNSIGNED_LONG (3 elements)
+   */
+  int num_blocks = 1;
+  const int block_lengths[] = {3};
+  const MPI_Aint displacements[] = {
+      0,
+  };
+  MPI_Datatype block_types[] = {
+      MPI_UNSIGNED_LONG,
+  };
+  MPI_Type_create_struct(num_blocks, block_lengths, displacements, block_types,
+                         &mpi_summary);
+  MPI_Type_commit(&mpi_summary);
+
+  return mpi_summary;
+}

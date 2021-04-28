@@ -35,6 +35,16 @@ typedef struct individual {
   SLIST_ENTRY(individual) individuals;
 } individual_t;
 
+/**
+ * @brief Represents the summary of the number of individuals for each status
+ *
+ */
+typedef struct summary {
+  unsigned long subsceptible;
+  unsigned long infected;
+  unsigned long immune;
+} summary_t;
+
 void print_individual(individual_t *ind);
 
 individual_t *create_individual(unsigned long id);
@@ -58,6 +68,9 @@ individual_list_t create_individual_list();
 #define INDIVIDUAL_REMOVE_HEAD(head) SLIST_REMOVE_HEAD(head, individuals)
 
 #define INDIVIDUAL_REMOVE_AFTER(ind) SLIST_REMOVE_AFTER(ind, individuals)
+
+#define INDIVIDUAL_COUNT(head, count) \
+  SLIST_COUNT(head, individuals, individual, count)
 
 #define INDIVIDUAL_REMOVE(head, ind) \
   SLIST_REMOVE(head, ind, individual, individuals)

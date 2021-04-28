@@ -27,6 +27,13 @@
     (elm)->field.sle_next = (elm)->field.sle_next->field.sle_next; \
   } while (0)
 
+#define SLIST_COUNT(head, field, type, count)       \
+  do {                                              \
+    *count = 0;                                     \
+    struct type *var;                               \
+    SLIST_FOREACH(var, head, field) { (*count)++; } \
+  } while (0)
+
 #define DYN_ARRAY_EXTEND(arr, target_len, capacity, type) \
   if (target_len > capacity) {                            \
     capacity = target_len + target_len % DYN_ARRAY_CHUNK; \

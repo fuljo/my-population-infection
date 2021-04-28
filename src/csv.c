@@ -36,3 +36,42 @@ void detail_csv_write_line(FILE *csv, individual_t *ind, int country,
           ind->pos[0], ind->pos[1], ind->displ[0], ind->displ[1],
           individual_status_string(ind->status), ind->t_status);
 }
+
+/**
+ * @brief Create a csv file for summary and write header
+ *
+ * @param[in] directory path of the directory where to store the file, not NULL
+ * @return FILE* file pointer with write access, NULL if error
+ */
+FILE *create_summary_csv(char *directory) {
+  char *path = malloc(PATH_MAX * sizeof(char));
+  /* Determine the filename and open the file */
+  sprintf(path, "%s/summary.csv", directory);
+  FILE *csv = fopen(path, "w");
+  if (csv) {
+    /* Write the header */
+    fprintf(csv, "day,country,subsceptible,infected,immune\n");
+  } else {
+    log_error("Cannot open file \"%s\" for writing", path);
+  }
+  free(path);
+  return csv;
+}
+
+/**
+ * @brief Write the given collection of summaries in the summary file
+ *
+ * @param csv csv file pointer, not null
+ * @param summaries array of summaries to write
+ * @param len length of the array
+ * @param day number of the day that has just ended (zero-based by convention)
+ */
+void summary_csv_write_day(FILE *csv, summary_t summaries[], size_t len,
+                           unsigned long day) {
+  summary_t *s;
+  for (size_t i = 0; i < len; i++) {
+    s = &summaries[i];
+    fprintf(csv, "%lu,%lu,%lu,%lu,%lu\n", day, i, s->subsceptible, s->infected,
+            s->immune);
+  }
+}
