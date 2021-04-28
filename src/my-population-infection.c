@@ -556,7 +556,6 @@ void update_position(global_config_t *cfg, individual_list_t *individuals,
     /* Prepare for next iteration */
     ind = next;
   }
-}
 
 /**
  * @brief Calculate the min and max x and y values for a country.
@@ -597,44 +596,37 @@ void calculate_neighbors(int neighbors[], global_config_t *cfg,
   int rows = (cfg->world_l / cfg->country_l);
   int col = rank % cols;
   int row = rank / cols;
-  /* Determine the indices */
+
+  /* Set indices as if this were an internal node */
+  neighbors[SOUTH_EAST] = rank - cols - 1;
+  neighbors[SOUTH] = rank - cols;
+  neighbors[SOUTH_WEST] = rank - cols + 1;
+  neighbors[NORTH_EAST] = rank - cols - 1;
+  neighbors[NORTH] = rank - cols;
+  neighbors[NORTH_WEST] = rank - cols + 1;
+  neighbors[WEST] = rank - 1;
+  neighbors[EAST] = rank + 1;
+
+  /* Correct the indices by considering the world boundaries */
   if (row == 0) { /* bottom row */
     neighbors[SOUTH_EAST] = -1;
     neighbors[SOUTH] = -1;
     neighbors[SOUTH_WEST] = -1;
-    neighbors[NORTH_EAST] = rank - cols - 1;
-    neighbors[NORTH] = rank - cols;
-    neighbors[NORTH_WEST] = rank - cols + 1;
-  } else if (row == rows - 1) { /* top row */
-    neighbors[SOUTH_EAST] = rank - cols - 1;
-    neighbors[SOUTH] = rank - cols;
-    neighbors[SOUTH_WEST] = rank - cols + 1;
+  }
+  if (row == rows - 1) { /* top row */
     neighbors[NORTH_EAST] = -1;
     neighbors[NORTH] = -1;
     neighbors[NORTH_WEST] = -1;
-  } else { /* internal row */
-    /* NOTE: _EAST and _WEST values are invalid if the country is on the
-     * vertical boundary, and will be corrected later in the code */
-    neighbors[SOUTH_EAST] = rank - cols - 1;
-    neighbors[SOUTH] = rank - cols;
-    neighbors[SOUTH_WEST] = rank - cols + 1;
-    neighbors[NORTH_EAST] = rank - cols - 1;
-    neighbors[NORTH] = rank - cols;
-    neighbors[NORTH_WEST] = rank - cols + 1;
   }
 
   if (col == 0) { /* first column */
     neighbors[SOUTH_WEST] = -1;
     neighbors[WEST] = -1;
     neighbors[NORTH_WEST] = -1;
-    neighbors[EAST] = rank + 1;
-  } else if (col == cols - 1) { /* last column */
+  }
+  if (col == cols - 1) { /* last column */
     neighbors[NORTH_EAST] = -1;
     neighbors[EAST] = -1;
     neighbors[NORTH_EAST] = -1;
-    neighbors[WEST] = rank - 1;
-  } else { /* internal column */
-    neighbors[EAST] = rank - 1;
-    neighbors[EAST] = rank + 1;
   }
 }
