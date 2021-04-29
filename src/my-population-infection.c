@@ -367,33 +367,10 @@ void initialize_individuals(global_config_t *cfg, int num_countries,
   const unsigned long x_min = col * cfg->country_w;
   const unsigned long y_min = row * cfg->country_l;
   individual_t *ind;
-  unsigned long id = initial_id;
   double theta;
-  /* The first individual must not be made infected if (N - 1) % I = 0 to have
-   * the right number of infected people */
-  if (num_infected > 0 && num_individuals % num_infected == 1) {
+  for (unsigned long i = 0; i < num_individuals; i++) {
     ind = malloc(sizeof(individual_t));
-    ind->id = id;
-    ind->t_status = 0;
-
-    /* Random position inside the country */
-    ind->pos[0] = RAND_DOUBLE(x_min, cfg->country_w);
-    ind->pos[1] = RAND_DOUBLE(y_min, cfg->country_l);
-
-    /* Random direction to compute displacement */
-    theta = RAND_DOUBLE(0, 2 * M_PI);
-    ind->displ[0] = cfg->t_step * cfg->velocity * cos(theta);
-    ind->displ[1] = cfg->t_step * cfg->velocity * sin(theta);
-
-    /* Not infected */
-    ind->status = NOT_EXPOSED;
-    INDIVIDUAL_INSERT(subsceptible_individuals, ind);
-
-    id++;
-  }
-  while (id < initial_id + num_individuals) {
-    individual_t *ind = malloc(sizeof(individual_t));
-    ind->id = id;
+    ind->id = i + initial_id;
     ind->t_status = 0;
     ind->pos[0] = RAND_DOUBLE(x_min, cfg->country_w);
     ind->pos[1] = RAND_DOUBLE(y_min, cfg->country_l);
@@ -402,15 +379,13 @@ void initialize_individuals(global_config_t *cfg, int num_countries,
     ind->displ[1] = cfg->t_step * cfg->velocity * sin(theta);
 
     /* Set status and insert into correct list */
-    if (num_infected > 0 && id % num_infected == 0) {
+    if (i < num_infected) {
       ind->status = INFECTED;
       INDIVIDUAL_INSERT(infected_individuals, ind);
     } else {
       ind->status = NOT_EXPOSED;
       INDIVIDUAL_INSERT(subsceptible_individuals, ind);
     }
-
-    id++;
   }
 }
 
