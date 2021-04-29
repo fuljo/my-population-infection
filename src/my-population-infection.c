@@ -497,7 +497,7 @@ void update_status(global_config_t *cfg,
   while (inf) {
     next = INDIVIDUAL_NEXT(inf);
     inf->t_status += cfg->t_step;
-    if (inf->t_status >= cfg->t_infection) {
+    if (inf->t_status >= cfg->t_recovery) {
       /* The individual becomes immune */
       inf->status = IMMUNE;
       inf->t_status = 0;
