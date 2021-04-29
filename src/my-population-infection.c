@@ -692,12 +692,12 @@ void calculate_neighbors(int neighbors[], global_config_t *cfg,
   int row = rank / cols;
 
   /* Set indices as if this were an internal node */
-  neighbors[SOUTH_EAST] = rank - cols - 1;
+  neighbors[SOUTH_EAST] = rank - cols + 1;
   neighbors[SOUTH] = rank - cols;
-  neighbors[SOUTH_WEST] = rank - cols + 1;
-  neighbors[NORTH_EAST] = rank - cols - 1;
-  neighbors[NORTH] = rank - cols;
-  neighbors[NORTH_WEST] = rank - cols + 1;
+  neighbors[SOUTH_WEST] = rank - cols - 1;
+  neighbors[NORTH_EAST] = rank + cols + 1;
+  neighbors[NORTH] = rank + cols;
+  neighbors[NORTH_WEST] = rank + cols - 1;
   neighbors[WEST] = rank - 1;
   neighbors[EAST] = rank + 1;
 
@@ -721,7 +721,7 @@ void calculate_neighbors(int neighbors[], global_config_t *cfg,
   if (col == cols - 1) { /* last column */
     neighbors[NORTH_EAST] = -1;
     neighbors[EAST] = -1;
-    neighbors[NORTH_EAST] = -1;
+    neighbors[SOUTH_EAST] = -1;
   }
 }
 
