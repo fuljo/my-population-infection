@@ -135,9 +135,8 @@ int main(int argc, char **argv) {
       printf("\n");
       free(arguments.argz);
     } else {
-      MPI_Finalize();
       log_error("Error while parsing CLI arguments\n");
-      return 1;
+      MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
     cfg = arguments.config;
@@ -145,8 +144,7 @@ int main(int argc, char **argv) {
 
     /* Validate configuration */
     if (validate_config(&cfg, world_size) != 0) {
-      MPI_Finalize();
-      return 1; /* Errors are printed inside the function */
+      MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
   }
 
@@ -206,6 +204,7 @@ int main(int argc, char **argv) {
   /* Main loop                                                                */
   /* -------------------------------------------------------------------------*/
   unsigned long t_last_summary = 0;
+  unsigned long infected_count, total_infected;
   for (unsigned long t = 0; t_last_summary < cfg.t_target; t += cfg.t_step) {
     log_debug("Rank %d -- t = %lu", rank, t);
     /* Update exposure of subsceptible individuals */
@@ -272,6 +271,18 @@ int main(int argc, char **argv) {
     wait_all_requests(send_requests, neighbors);
     /* Reset the length of the migrated_out buffers */
     memset(migrated_out_len, 0, NEIGHBOR_COUNT * sizeof(size_t));
+
+    /* Check the total number of infected individuals in the world */
+    INDIVIDUAL_COUNT(&infected_individuals, &infected_count);
+    MPI_Allreduce(&infected_count, &total_infected, 1, MPI_UNSIGNED_LONG,
+                  MPI_SUM, MPI_COMM_WORLD);
+    /* If there are no more infected individuals, terminate the simulation */
+    if (total_infected == 0) {
+      if (rank == ROOT_RANK) {
+      log_info("Terminating at t=%lu: No more infected individuals", t);
+      }
+      break;
+    }
   }
   /* -------------------------------------------------------------------------*/
   /* Cleanup                                                                  */
