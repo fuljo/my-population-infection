@@ -7,8 +7,6 @@ services:
       - IS_ROOT=1
     ports: 
       - "22"
-    links: 
-      - mpi_worker
     networks:
       net:
         aliases:
@@ -20,20 +18,23 @@ services:
     command: \
       -N 10000 \
       -I 100 \
-      -W 10000 \
+      -W 2000 \
       -L 3000 \
-      -w 5000 \
+      -w 1000 \
       -l 1000 \
-      -v 7 \
-      -d 5 \
-      --t-infection=600 \
+      -v 1.4 \
+      -d 2 \
+      --t-infection=60 \
       --t-recovery=3600 \
-      --t-immunity=10800 \
-      --sim-step=1 \
-      --sim-length=2
+      --t-immunity=14400 \
+      --sim-step=60 \
+      --sim-length=1 \
+      --log-level INFO
 
   mpi_worker:
     image: my-population-infection
+    depends_on:
+      - mpi_root
     deploy:
       replicas: 2
     networks:

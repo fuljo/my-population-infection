@@ -30,20 +30,22 @@ world.o: world.c world.h utils.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 run: $(exec)
-	@mpirun $(exec) \
-		-N 100 \
-		-I 10 \
-		-W 10000 \
-		-L 3000 \
-		-w 5000 \
-		-l 3000 \
-		-v 7 \
-		-d 5 \
-		--t-infection=$$((10 * 60)) \
-		--t-recovery=$$((60 * 60)) \
-		--t-immunity=$$((3 * 60 * 60)) \
-		--sim-step=1 \
-		--sim-length=2
+	@mpirun -np 2 $(exec) \
+		-N 10000 \
+		-I 100 \
+		-W 2000 \
+		-L 4000 \
+		-w 2000 \
+		-l 2000 \
+		-v 1.4 \
+		-d 2 \
+		--t-infection=$$((1 * 60)) \
+		--t-recovery=$$((1 * 3600)) \
+		--t-immunity=$$((4 * 3600)) \
+		--sim-step=60 \
+		--sim-length=1 \
+		--write-trace \
+		--log-level INFO
 
 clean:
 	rm -f $(exec) *.o *.gch
