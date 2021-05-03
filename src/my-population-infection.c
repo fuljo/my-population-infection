@@ -279,7 +279,7 @@ int main(int argc, char **argv) {
     /* If there are no more infected individuals, terminate the simulation */
     if (total_infected == 0) {
       if (rank == ROOT_RANK) {
-      log_info("Terminating at t=%lu: No more infected individuals", t);
+        log_info("Terminating at t=%lu: No more infected individuals", t);
       }
       break;
     }
@@ -493,6 +493,7 @@ void update_status(global_config_t *cfg,
         /* Put it in the other list */
         INDIVIDUAL_INSERT(infected_individuals, sub);
       } else {
+        sub->status = NOT_EXPOSED;
         /* If we didn't move the current element, we can advance prev */
         prev = sub;
       }
