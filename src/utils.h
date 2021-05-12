@@ -8,7 +8,7 @@
 
 #define SECOND 1
 #define MINUTE 60
-#define DAY 60 * 60 * 24
+#define DAY (60 * 60 * 24)
 
 /* How many elements will be allocated when a dynamic array reaches its capacity
  */
