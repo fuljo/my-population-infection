@@ -75,14 +75,14 @@ WORKDIR /home/${USER}/
 
 # Copy source code
 COPY src/ src/
+USER root
+RUN chown -R ${USER}:${USER} src/
 
 # Compile source code
+USER mpirun
 RUN make -C src
 
 # Move executable to HOME
-USER root
-RUN chown -R ${USER}:${USER} src/
-USER mpirun
 RUN mv src/${APP} ./
 
 # ------------------------------------------------------------

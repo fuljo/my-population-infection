@@ -1,8 +1,8 @@
 # Output ELF
-my-population-infection
+src/my-population-infection
 
 # Results directory
-results/
+src/results/
 
 # Prerequisites
 *.d

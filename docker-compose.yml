@@ -28,7 +28,7 @@ services:
       --t-recovery=3600 \
       --t-immunity=14400 \
       --sim-step=60 \
-      --sim-length=1 \
+      --sim-length=14 \
       --log-level INFO
 
   mpi_worker:
