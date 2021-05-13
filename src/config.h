@@ -39,6 +39,6 @@ int parse_opt(int key, char *arg, struct argp_state *state);
 
 void init_config_default(global_config_t *cfg);
 
-void print_config(global_config_t *cfg);
+void log_config(global_config_t *cfg);
 
 int validate_config(global_config_t *cfg, int world_size);

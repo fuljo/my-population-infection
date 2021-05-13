@@ -216,12 +216,12 @@ int validate_config(global_config_t *cfg, int world_size) {
 }
 
 /**
- * @brief Prints the configuration.
+ * @brief Logs the configuration with level INFO.
  *
  * @param[in] cfg configuration
  */
-void print_config(global_config_t *cfg) {
-  printf(
+void log_config(global_config_t *cfg) {
+  log_info(
       "--------------------\nGlobal configuration\n--------------------\n "
       "num_individuals %lu\n "
       "inf_individuals %lu\n world_w %lu\n world_l %lu\n country_w %lu\n "

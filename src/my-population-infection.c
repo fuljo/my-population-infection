@@ -65,6 +65,8 @@ int main(int argc, char **argv) {
   /* -------------------------------------------------------------------------*/
   /* Initialization                                                           */
   /* -------------------------------------------------------------------------*/
+  /* Set default log level */
+  log_set_level(LOG_DEFAULT);
 
   /* Initialize MPI */
   MPI_Init(&argc, &argv);
@@ -73,7 +75,7 @@ int main(int argc, char **argv) {
   int world_size, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  log_info("Hello from node %d out of %d", rank, world_size);
+  log_info("Hello from rank %d out of %d", rank, world_size);
 
   /* Create custom MPI datatypes */
   MPI_Datatype mpi_global_config = create_type_mpi_global_config();
@@ -126,13 +128,6 @@ int main(int argc, char **argv) {
     struct arguments arguments;
     init_config_default(&arguments.config);
     if (argp_parse(&argp, argc, argv, 0, 0, &arguments) == 0) {
-      const char *prev = NULL;
-      char *word;
-      while ((word = argz_next(arguments.argz, arguments.argz_len, prev))) {
-        printf("%s", word);
-        prev = word;
-      }
-      printf("\n");
       free(arguments.argz);
     } else {
       log_error("Error while parsing CLI arguments\n");
@@ -140,7 +135,7 @@ int main(int argc, char **argv) {
     }
 
     cfg = arguments.config;
-    print_config(&cfg);
+    log_config(&cfg);
 
     /* Validate configuration */
     if (validate_config(&cfg, world_size) != 0) {
@@ -369,10 +364,6 @@ void initialize_individuals(global_config_t *cfg, int num_countries,
 
   log_debug("Rank %d -- individuals=%lu, infected=%lu, initial id=%lu", rank,
             num_individuals, num_infected, initial_id);
-
-  if (num_individuals == 0) {
-    return;
-  }
 
   /* Initialize each individual */
   const unsigned long x_min = col * cfg->country_w;
