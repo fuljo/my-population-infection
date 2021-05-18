@@ -1,0 +1,45 @@
+\DontPrintSemicolon
+
+% Style
+\SetAlFnt{%
+    \setsansfont{Latin Modern Sans}%
+    \setmonofont{Latin Modern Mono}%
+}
+\newcommand{\mydatasty}[1]{\AlFnt \textsf{#1}}
+\SetDataSty{mydatasty}
+
+% Language keywords
+\SetKw{Step}{step}
+\SetKw{Break}{break}
+% Data
+\SetKwData{True}{true}
+\SetKwData{False}{false}
+\SetKwData{Cfg}{cfg}
+\SetKwData{NotExposed}{not-exposed}
+\SetKwData{Exposed}{exposed}
+\SetKwData{Infected}{infected}
+\SetKwData{Immune}{immune}
+\SetKwData{MigratedTag}{MIGRATED\_TAG}
+% MPI functions
+\SetKwFunction{MPIAbort}{MPI\_Abort}
+\SetKwFunction{MPIAllreduce}{MPI\_Allreduce}
+\SetKwFunction{MPIBcast}{MPI\_Bcast}
+\SetKwFunction{MPIExscan}{MPI\_Exscan}
+\SetKwFunction{MPIFile}{MPI\_File}
+\SetKwFunction{MPIGather}{MPI\_Gather}
+\SetKwFunction{MPIIsend}{MPI\_Isend}
+\SetKwFunction{MPIIbcast}{MPI\_Ibcast}
+\SetKwFunction{MPIIscatter}{MPI\_Iscatter}
+\SetKwFunction{MPIRecv}{MPI\_Recv}
+\SetKwFunction{MPIReduce}{MPI\_Reduce}
+\SetKwFunction{MPIScatter}{MPI\_Scatter}
+\SetKwFunction{MPISend}{MPI\_Send}
+% User functions
+\SetKwFunction{ValidateConfig}{validate\_config}
+\SetKwFunction{DistributePopulation}{distribute\_population}
+\SetKwFunction{UpdateExposure}{update\_exposure}
+\SetKwFunction{UpdateStatus}{update\_status}
+\SetKwFunction{UpdatePosition}{update\_position}
+\SetKwFunction{Count}{count}
+\SetKwFunction{CountByStatus}{count\_by\_status}
+\SetKwFunction{WriteToCSV}{write\_to\_csv}

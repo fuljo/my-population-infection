@@ -14,6 +14,8 @@
 \RequirePackage{tikz}
 \usetikzlibrary{positioning, arrows.meta, matrix, patterns}
 \RequirePackage{todonotes}
+\RequirePackage{listings}
+\RequirePackage[ruled,vlined]{algorithm2e}
 
 \RequirePackage{tabu} % Tables
 \RequirePackage{booktabs}
@@ -42,9 +44,12 @@
 %------------------------------------------------
 %	Font
 %------------------------------------------------
-% \setromanfont{MinionPro}
-\setsansfont[Ligatures=TeX]{HelveticaLTStd}
-\setmonofont{Courier New}
+\IfFontExistsTF{HelveticaLTStd-Roman.otf}{%
+  \setsansfont[Ligatures=TeX]{HelveticaLTStd}
+}{}
+% \IfFontExistsTF{Courier New}{%
+%   \setmonofont{Courier New}
+% }{}
 \newcommand{\periodafter}[1]{#1.}
 
 %------------------------------------------------
@@ -52,6 +57,7 @@
 %------------------------------------------------
 \newcommand{\cmark}{\ding{51}}%
 \newcommand{\xmark}{\ding{55}}%
+\mathchardef\mhyphen="2D%
 
 %------------------------------------------------
 %	Heading styles
