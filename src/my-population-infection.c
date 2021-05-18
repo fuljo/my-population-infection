@@ -792,7 +792,11 @@ void receive_migrated_in(individual_t *migrated_in[], size_t migrated_in_len[],
                          size_t migrated_in_capacity[], int neighbors[],
                          MPI_Datatype mpi_individual) {
   MPI_Status status;
-  for (int i = 0; i < NEIGHBOR_COUNT; i++) {
+  int i;
+  for (int j = 0; j < NEIGHBOR_COUNT; j++) {
+    /* Receive in the same order as sending: if NORTH is sent first, then SOUTH
+     * is received first */
+    i = (j + NEIGHBOR_OPPOSITE_DISTANCE) % NEIGHBOR_COUNT;
     if (neighbors[i] >= 0) {
       /* Query the number of received individuals */
       MPI_Probe(neighbors[i], MIGRATED_TAG, MPI_COMM_WORLD, &status);

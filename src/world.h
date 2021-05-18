@@ -27,6 +27,7 @@ typedef struct limits {
 } limits_t;
 
 #define NEIGHBOR_COUNT 8
+#define NEIGHBOR_OPPOSITE_DISTANCE 4
 
 void distribute_population_uniform(unsigned long population,
                                    unsigned int num_countries,
