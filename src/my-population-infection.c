@@ -242,8 +242,8 @@ int main(int argc, char **argv) {
     }
 
     /* Send summary if at the end of day */
-    /* NOTE: At this point we have computed the situation at t+1 */
-    if (t + 1 - t_last_summary >= DAY) {
+    /* NOTE: At this point we have computed the situation at t+t_step */
+    if (t + cfg.t_step - t_last_summary >= DAY) {
       /* Prepare summary */
       INDIVIDUAL_COUNT(&subsceptible_individuals, &summary.subsceptible);
       INDIVIDUAL_COUNT(&infected_individuals, &summary.infected);
@@ -444,7 +444,7 @@ void update_exposure(double spreading_distance,
  * <tt>status == EXPOSED</tt>
  *
  * @post All individuals are in the correct list according to their status.
- * All \c subsceptible_individuals have \c status reset to \c EXPOSED.
+ * All \c subsceptible_individuals have \c status reset to \c NOT_EXPOSED.
  * If the individual was \c NOT_EXPOSED , \c t_status is reset to zero.
  * In all other cases \c t_status is incremented by \c t_step , except if there
  * is a status change, where it is reset to zero.
