@@ -112,8 +112,7 @@ int main(int argc, char **argv) {
         {0, 0, 0, 0, "Simulation options", 4},
         {"sim-step", 666, "INT", 0, "Simulation step in seconds"},
         {"sim-length", 777, "INT", 0, "Length of the simulation in days"},
-        {"rand-seed", 888, "INT", 0,
-         "Seed for PRNG. (default time(NULL))"},
+        {"rand-seed", 888, "INT", 0, "Seed for PRNG. (default time(NULL))"},
         {0, 0, 0, 0, "Logging options", 5},
         {"log-level", 999, "[TRACE|DEBUG|INFO|WARN|ERROR|FATAL]", 0,
          "Logging level (default INFO)"},
@@ -123,10 +122,11 @@ int main(int argc, char **argv) {
         {0},
     };
     /* Define program description */
-    struct argp argp = {options, parse_opt,
-                        "-N int -I int -W int -L int -w int -l int"
-                        " -d float -v float --sim-step seconds --sim-length days ",
-                        "A simple model for virus spreading."};
+    struct argp argp = {
+        options, parse_opt,
+        "-N int -I int -W int -L int -w int -l int"
+        " -d float -v float --sim-step seconds --sim-length days ",
+        "A simple model for virus spreading."};
 
     /* Read command-line options and arguments */
     struct arguments arguments;
@@ -210,6 +210,13 @@ int main(int argc, char **argv) {
     update_exposure(cfg.spreading_distance, &subsceptible_individuals,
                     &infected_individuals);
 
+    /* Write trace to file */
+    if (cfg.write_trace) {
+      trace_csv_write_step(trace_csv, &subsceptible_individuals, rank, t);
+      trace_csv_write_step(trace_csv, &infected_individuals, rank, t);
+      trace_csv_write_step(trace_csv, &immune_individuals, rank, t);
+    }
+
     /* Update the status of all individuals based on t_status and move them
        into the correct list */
     update_status(&cfg, &subsceptible_individuals, &infected_individuals,
@@ -238,13 +245,6 @@ int main(int argc, char **argv) {
                           &subsceptible_individuals, &infected_individuals,
                           &immune_individuals, &gc_individuals);
 
-    /* Write trace to file */
-    if (cfg.write_trace) {
-      trace_csv_write_step(trace_csv, &subsceptible_individuals, rank, t);
-      trace_csv_write_step(trace_csv, &infected_individuals, rank, t);
-      trace_csv_write_step(trace_csv, &immune_individuals, rank, t);
-    }
-
     /* Send summary if at the end of day */
     /* NOTE: At this point we have computed the situation at t+t_step */
     if (t + cfg.t_step - t_last_summary >= DAY) {
@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
         fflush(summary_csv);
       }
       /* Update time of last summary */
-      t_last_summary = t;
+      t_last_summary = t + cfg.t_step;
     }
 
     /* Wait until all send requests have been completed */
