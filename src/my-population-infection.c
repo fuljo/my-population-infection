@@ -103,25 +103,29 @@ int main(int argc, char **argv) {
         {"spreading-distance", 'd', "FLOAT", 0,
          "Maximum spreading distance in meters"},
         {"t-infection", 333, "INT", 0,
-         "Minimum continuous exposure time for getting infected"},
-        {"t-recovery", 444, "INT", 0, "Time needed for recovering"},
+         "Minimum continuous exposure time for getting infected "
+         "(default 10 min)"},
+        {"t-recovery", 444, "INT", 0,
+         "Time needed for recovering (default 10 days)"},
         {"t-immunity", 555, "INT", 0,
-         "Duration of immunity period after recovering"},
+         "Duration of immunity period after recovering (default 90 days)"},
         {0, 0, 0, 0, "Simulation options", 4},
         {"sim-step", 666, "INT", 0, "Simulation step in seconds"},
         {"sim-length", 777, "INT", 0, "Length of the simulation in days"},
         {"rand-seed", 888, "INT", 0,
-         "Seed for PRNG. By default initialized to time(0)"},
+         "Seed for PRNG. (default time(NULL))"},
         {0, 0, 0, 0, "Logging options", 5},
         {"log-level", 999, "[TRACE|DEBUG|INFO|WARN|ERROR|FATAL]", 0,
-         "Logging level"},
-        {"write-trace", 101010, "", OPTION_ARG_OPTIONAL,
+         "Logging level (default INFO)"},
+        {"write-trace", 101010, 0, 0,
          "Write the file results/trace.csv with details about each individual "
          "at each time step"},
         {0},
     };
     /* Define program description */
-    struct argp argp = {options, parse_opt, NULL,
+    struct argp argp = {options, parse_opt,
+                        "-N int -I int -W int -L int -w int -l int"
+                        " -d float -v float --sim-step seconds --sim-length days ",
                         "A simple model for virus spreading."};
 
     /* Read command-line options and arguments */
@@ -274,7 +278,7 @@ int main(int argc, char **argv) {
     /* If there are no more infected individuals, terminate the simulation */
     if (total_infected == 0) {
       if (rank == ROOT_RANK) {
-        log_info("Terminating at t=%lu: No more infected individuals", t);
+        log_warn("Terminating at t=%lu: No more infected individuals", t);
       }
       break;
     }
