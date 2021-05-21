@@ -11,7 +11,7 @@ From a theoretical perspective, it is easy to see that the complexity of the alg
 We further assume that individuals are distributed uniformly, thus having $N/C$ individuals for each country.
 Each iteration of the loop is characterized by different phases, detailed in section \ref{sec:alg_desc}, which can be divided in two categories of complexity:
 \begin{itemize}
-    \item \emph{update exposure} compares each subsceptible individuals against, at most, each infected one. The number of checks can be upper-bounded by $\bigO((N/C)^2)$.
+    \item \emph{update exposure} compares each susceptible individuals against, at most, each infected one. The number of checks can be upper-bounded by $\bigO((N/C)^2)$.
     \item all the other steps perform a single scan of the lists of individuals at each country, thus having a complexity $\bigO(N/C)$.
 \end{itemize}
 We conclude that the execution time $T$, assuming that all processes run in parallel, is upper-bounded by \[T = \bigO \left(S \frac{N^2}{C^2} \right)\].

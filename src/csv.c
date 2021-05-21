@@ -53,7 +53,7 @@ FILE *create_summary_csv(char *directory) {
   FILE *csv = fopen(path, "w");
   if (csv) {
     /* Write the header */
-    fprintf(csv, "day,country,subsceptible,infected,immune\n");
+    fprintf(csv, "day,country,susceptible,infected,immune\n");
   } else {
     log_error("Cannot open file \"%s\" for writing", path);
   }
@@ -74,7 +74,7 @@ void summary_csv_write_day(FILE *csv, summary_t summaries[], size_t len,
   summary_t *s;
   for (size_t i = 0; i < len; i++) {
     s = &summaries[i];
-    fprintf(csv, "%lu,%lu,%lu,%lu,%lu\n", day, i, s->subsceptible, s->infected,
+    fprintf(csv, "%lu,%lu,%lu,%lu,%lu\n", day, i, s->susceptible, s->infected,
             s->immune);
   }
 }

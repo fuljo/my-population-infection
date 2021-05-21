@@ -1,7 +1,7 @@
 \section{Algorithm description}
 \label{sec:alg_desc}
 
-Here we give an high-level description of how the program works, with some pseudocode where useful. Such pseudocode is meant to provide an abstract and concise representation of the algorithm, leaving out many implementation details and optimizations.
+Here we give a high-level description of how the program works, with some pseudocode where useful. Such pseudocode is meant to provide an abstract and concise representation of the algorithm, leaving out many implementation details and optimizations.
 
 \paragraph{Individual}
 An individual is described by the following attributes:
@@ -9,7 +9,7 @@ An individual is described by the following attributes:
     \item $id$ : unique identifier in the world (assigned incrementally)
     \item $pos = (x,y)$ : absolute position in the world
     \item $\Delta pos = (\Delta x,\Delta y)$ : displacement vector, representing the movement at each step
-    \item $status =$ \NotExposed | \Exposed | \Infected | \Immune : current status of the individual. Both \NotExposed and \Exposed individuals are considered subsceptible; the distinction is introduced for computational needs, for ease of visualization and debugging
+    \item $status =$ \NotExposed | \Exposed | \Infected | \Immune : current status of the individual. Both \NotExposed and \Exposed individuals are considered susceptible; the distinction is introduced for computational needs, for ease of visualization and debugging
     \item $t_{status}$ : time passed since the individual entered its current state. It is used to determine when to change state.
 \end{itemize}
 
@@ -23,16 +23,16 @@ We also use \MPIExscan to compute the id of the first individual of each country
 
 Note that we used blocking and asynchronous communication primitives for two main reasons:
 \begin{enumerate*}[label=(\roman*)]
-    \item the amount of data to be sent is small, so it is unlikely to fill the send buffers, and
+    \item the amount of data to be sent is small, so it is unlikely to fill the send-buffers, and
     \item the data flows only from the root to the other processes, so there is no need for synchronization
 \end{enumerate*}.
 Pseudocode of the initialization procedure can be found in algorithm~\ref{alg:initialization}.
 
 \paragraph{Main loop}
-Each iteration of the main loop takes a consistent situation at time $t$ and computes a consistent situation at $t + t_{step}$. There is no interpolation: each individual is treated as if it were in the same initial position and status for the whole step. At the beginning of each iteration we assume that each subsceptible individual has $status_i = \NotExposed$.
+Each iteration of the main loop takes a consistent situation at time $t$ and computes a consistent situation at $t + t_{step}$. There is no interpolation: each individual is treated as if it were in the same initial position and status for the whole step. At the beginning of each iteration we assume that each susceptible individual has $status_i = \NotExposed$.
 The procedure, summarized in algorithm~\ref{alg:mainloop}, can be broken down in various phases:
 \begin{description}
-    \item[update exposure] Check each subsceptible individual $i$ against infected individuals: as soon as $i$ is found within spreading distance $d$ from an infected $j$, it is flagged with $status_i = \Exposed$.
+    \item[update exposure] Check each susceptible individual $i$ against infected individuals: as soon as $i$ is found within spreading distance $d$ from an infected $j$, it is flagged with $status_i = \Exposed$.
 
     \item[update status] Based on $status$ and $t_{status}$, the status of each individual is updated (for example, an infected individual with $t_{status} >= t_{infection}$ will become immune). In case the individual changed status or was not exposed, $t_{status}$ is reset to zero, otherwise it is incremented by $t_{step}$. \Exposed individuals are set back to \NotExposed. In this way $t_{status}$ will accumulate the time an individual has been continuously exposed.
      
@@ -44,12 +44,12 @@ The procedure, summarized in algorithm~\ref{alg:mainloop}, can be broken down in
 
     \item[exchange migrated] Country $c$ exchanges the list of individuals that moved to each of its neighbors $c'$. The source country performs an \MPIIsend and the destination will perform a matching \MPIRecv , both with the specific tag \MigratedTag.
     We then integrate the received individuals into the local lists and finally wait for the sends to complete.
-    We chose a \emph{non-blocking} send so that the process immediately starts receiving from its neighbors, without having to wait for all the outbound data to be copied into the buffers, which may fill since a lot of data is sent, potentially. For receives we chose a \emph{blocking} approach, with the disadvantage that a process might be stuck waiting for a slower neighbor while, a faster neighbor has already sent its data. However the only approaches that overcome this limitation are \emph{event-driven} and \emph{polling}, none of which is available out-of-the-box in MPI, so we chose not to overcomplicate the code for a small gain in performance.
-    In order to send the struct representing an individiual, we created a custom MPI type called \texttt{mpi\_individual}.
+    We chose a \emph{non-blocking} send so that the process immediately starts receiving from its neighbors, without having to wait for all the outbound data to be copied into the buffers, which may fill since a lot of data is sent, potentially. For receives we chose a \emph{blocking} approach, with the disadvantage that a process might be stuck waiting for a slower neighbor while, a faster neighbor has already sent its data. However, the only approaches that overcome this limitation are \emph{event-driven} and \emph{polling}, none of which is available out-of-the-box in MPI, so we chose not to overcomplicate the code for a small gain in performance.
+    In order to send the struct representing an individual, we created a custom MPI type called \texttt{mpi\_individual}.
 
-    \item[write summary] If at least one day has passed since the last summary, each country counts how many subsceptible, infected and immune individuals are currently in it. This data is packed into a \texttt{mpi\_summary} triple and gathered by the root using \MPIGather; the root will write an entry for each country in a \texttt{csv} file. An alternative to this approach would be collectively writing to an \MPIFile , but this also involves ensuring that each write operation is atomic. In our opinion the chosen approach is simpler, clearer and equivalent in terms of performance.
+    \item[write summary] If at least one day has passed since the last summary, each country counts how many susceptible, infected and immune individuals are currently in it. This data is packed into a \texttt{mpi\_summary} triple and gathered by the root using \MPIGather; the root will write an entry for each country in a \texttt{csv} file. An alternative to this approach would be collectively writing to an \MPIFile , but this also involves ensuring that each write operation is atomic. In our opinion the chosen approach is simpler, clearer and equivalent in terms of performance.
      
-    \item[check termination] Each country counts the local number of infected individuals, then it calls \MPIAllreduce so that the total number of infected in the world is computed and received by each country. If there are no more infected in the whole whorld, the loop stops.
+    \item[check termination] Each country counts the local number of infected individuals, then it calls \MPIAllreduce so that the total number of infected in the world is computed and received by each country. If there are no more infected in the whole world, the loop stops.
 \end{description}
 
 \begin{algorithm}[p]
@@ -79,7 +79,7 @@ The procedure, summarized in algorithm~\ref{alg:mainloop}, can be broken down in
 \begin{algorithm}[p]
 
     \For{$t \leftarrow 0$ \KwTo $t_{target}$ \Step $t_{step}$}{
-        \ForEach{subsceptible individual $i$, infected individual $j$}{
+        \ForEach{susceptible individual $i$, infected individual $j$}{
             \UpdateExposure{$i,j$}\;
         }
         \ForEach{individual $i$}{
@@ -95,8 +95,8 @@ The procedure, summarized in algorithm~\ref{alg:mainloop}, can be broken down in
         }
         wait until all the \MPIIsend have completed\;
         \If{end of day}{
-            $\langle subsceptible_c, infected_c, immune_c \rangle \leftarrow$ \CountByStatus{$\left\{ status_{i} \right\}$}\;
-            $summary \leftarrow$ \MPIGather{$\left\{\langle subsceptible_c, infected_c, immune_c \rangle\right\}$}\;
+            $\langle susceptible_c, infected_c, immune_c \rangle \leftarrow$ \CountByStatus{$\left\{ status_{i} \right\}$}\;
+            $summary \leftarrow$ \MPIGather{$\left\{\langle susceptible_c, infected_c, immune_c \rangle\right\}$}\;
             \If{root}{
                 \WriteToCSV{$summary$}\;
             }

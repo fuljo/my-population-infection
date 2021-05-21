@@ -40,7 +40,7 @@ typedef struct individual {
  *
  */
 typedef struct summary {
-  unsigned long subsceptible;
+  unsigned long susceptible;
   unsigned long infected;
   unsigned long immune;
 } summary_t;

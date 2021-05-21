@@ -2,7 +2,7 @@
 \label{sec:intro}
 
 We consider a rectangular area of dimension $W \times L$ subdivided into rectangular areas of dimension $w \times l$ each. We consider a cartesian reference system with $x$ pointing to the East and $y$ to the North as shown in figure~\ref{fig:area_subdivision}. The areas are indexed in left-to-right and bottom-up order.
-For simplicity we assume that these dimensions are given as integers, that $l$ divides $L$ and $w$ divides $W$ (the input will be checked).
+For simplicity, we assume that these dimensions are given as integers, that $l$ divides $L$ and $w$ divides $W$ (the input will be checked).
 We use MPI as the implementation technology, so we decide to assign each country to a separate MPI process to improve the regularity of the program, while still not preventing multiple processes to be assigned to the same node.
 \begin{figure}[h]
     \centering
@@ -45,10 +45,10 @@ We use MPI as the implementation technology, so we decide to assign each country
 \end{figure}
 
 \noindent
-Our program then considers a population $N$ and an initial number of infected individuals $I$ which are uniformly disitributed among the countries. \todo{consider explicit listing or random multinomial partitioning}
+Our program then considers a population $N$ and an initial number of infected individuals $I$ which are uniformly distributed among the countries.
 
 \paragraph{Motion}
-The individuals will follow a linear motion with velocity $v$ (given in \si{m/s}), whose direction is randomly generated for each individual at the beginning of the simulation, and is kept also when moving from one country to another. When an individual is detected reaching (or surpassing) the world boundary it "bounces" onto it: the components of its speed perpendicular to the boundary will be inverted, as in figure~\ref{fig:boundary_bounce}.
+The individuals will follow a linear motion with velocity $v$ (given in \si{m/s}), whose direction is randomly generated for each individual at the beginning of the simulation, and is kept also when moving from one country to another. When an individual is detected reaching (or surpassing) the world boundary it “bounces” onto it: the components of its speed perpendicular to the boundary will be inverted, as in figure~\ref{fig:boundary_bounce}.
 
 \begin{figure}[h]
     \centering
@@ -71,13 +71,13 @@ The individuals will follow a linear motion with velocity $v$ (given in \si{m/s}
 \end{figure}
 
 \paragraph{Infection and recovery}
-If a subsceptible individual $i$ spends at least $t_{infection} = \SI{10}{min}$ at a distance $d_{ij}\leq d$ from an infected person $j$ it gets \emph{infected}, too.
-After being infected for $t_{recovery} = \SI{10}{day}$ a person will become \emph{immune}, so it can't be infected or infect others. It will become subsceptible again after further $t_{immunity} = \SI{39}{days}$.
+If a susceptible individual $i$ spends at least $t_{infection} = \SI{10}{min}$ at a distance $d_{ij}\leq d$ from an infected person $j$ it gets \emph{infected}, too.
+After being infected for $t_{recovery} = \SI{10}{day}$ a person will become \emph{immune}, so it can't be infected or infect others. It will become susceptible again after further $t_{immunity} = \SI{39}{days}$.
 
-We only consider individuals in the same country when computing infections, in order to reduce the communication between processes. This means that if two individuals are closer than $d$ but in different countries, they won't be able to infect each other. This approximation should be acceptable in a realistic scenario where there are physical borders between countries and where $d$ is much smaller than the size of a country. However the "infection timer" of an individual is not reset when passing the border.
+We only consider individuals in the same country when computing infections, in order to reduce the communication between processes. This means that if two individuals are closer than $d$ but in different countries, they won't be able to infect each other. This approximation should be acceptable in a realistic scenario where there are physical borders between countries and where $d$ is much smaller than the size of a country. However, the “infection timer” of an individual is not reset when passing the border.
 
 \paragraph{Simulation step}
-The position and status of each individual is computed with a granularity of $t_{step}$ seconds, with no interpolation inbetween.
+The position and status of each individual is computed with a granularity of $t_{step}$ seconds, with no interpolation in between.
 We compute periodic logs of the status of the population as soon as the end of each day has been surpassed, therefore we assume that $t_{step} \ll \SI{1}{day}$. Also, in a realistic scenario we should have $t_{step} \cdot v \ll w,l$ so that an individual cannot span a whole country in few steps.
 The simulation ends when
 \begin{enumerate*}[label=(\roman*)]
