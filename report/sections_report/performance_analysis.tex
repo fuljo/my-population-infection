@@ -1,0 +1,95 @@
+\section{Performance analysis}
+\label{sec:performance_analysis}
+
+In this section we analyze how the \emph{execution time} varies with respect to the number of countries $C$ and the number of individuals $N$.
+From a theoretical perspective, it is easy to see that the complexity of the algorithm is dominated by the main loop, let us define
+\begin{itemize}
+    \item $S = \lfloor t_{target} / t_{step} \rfloor$ the number of iterations
+    \item $C$ the number of countries
+    \item $N$ the number of individuals
+\end{itemize}
+We further assume that individuals are distributed uniformly, thus having $N/C$ individuals for each country.
+Each iteration of the loop is characterized by different phases, detailed in section \ref{sec:alg_desc}, which can be divided in two categories of complexity:
+\begin{itemize}
+    \item \emph{update exposure} compares each subsceptible individuals against, at most, each infected one. The number of checks can be upper-bounded by $\bigO((N/C)^2)$.
+    \item all the other steps perform a single scan of the lists of individuals at each country, thus having a complexity $\bigO(N/C)$.
+\end{itemize}
+We conclude that the execution time $T$, assuming that all processes run in parallel, is upper-bounded by \[T = \bigO \left(S \frac{N^2}{C^2} \right)\].
+
+\subsection{Varying the countries}
+If we fix the number of iterations and of individuals, we expect to get a time complexity of $\bigO(1/C^2)$. In other words, the advantage is that $N$ is split between the countries and only individuals in the same country are checked against each other.
+
+We performed several simulations with \num{30000} individuals in the same $4096 \times 4096$ world, which we split horizontally between 1 and 20 countries. Each simulation spanned a single day with a step of \SI{60}{s} (1440 iterations). The results in figure \ref{fig:profile_countries} agree with our expectations.
+
+\begin{figure}[p]
+    \begin{subfigure}[c]{.6\textwidth}
+        \begin{tikzpicture}
+            \begin{axis}[
+                xlabel=Number of countries,
+                ylabel=Execution time (seconds),
+                legend pos=north east,
+            ]
+                \addplot
+                    [blue]
+                    table[x=countries, y=elapsed, col sep=comma]
+                    {tables/profile_countries_1_20.csv};
+                \addplot
+                    [black, dashed]
+                    table[x=countries, y expr=136.7625 + 2899.99 / \thisrow{countries}^2 , col sep=comma]
+                    {tables/profile_countries_1_20.csv};
+                \legend{real, $\bigO(1/C^2)$}
+            \end{axis}
+        \end{tikzpicture}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[c]{.35\textwidth}
+        \csvreader[
+            tabular=c c,
+            table head=\toprule countries & exec. time \\ \midrule,
+            table foot=\bottomrule]%
+        {tables/profile_countries_1_20.csv}%
+        {countries=\countries, elapsed_latex=\elapsed}%
+        {\countries & \elapsed}
+    \end{subfigure}
+    \caption{Execution time when splitting computation between countries}
+    \label{fig:profile_countries}
+\end{figure}
+
+\subsection{Varying the individuals}
+If we fix the number of iterations and of countries, we expect the time complexity to be about $\bigO(N^2)$, or slightly lower since we have some optimizations.
+
+We performed several simulations with 4 countries (the number of threads of our machine), spanning a single day with a \SI{60}{s} step (1440 iterations). We varied the number of individuals from \num{10000} to \num{60000} with a \num{5000} increment. The challenge here was to also vary the world size so that the simulation did not terminate early due to a lack of infected individuals. We found that the heuristic $W = L = 20 \sqrt{N}$ works well in our case. The results are shown in figure \ref{fig:profile_individuals}, and they agree with our expectations.
+
+\begin{figure}[p]
+    \begin{subfigure}[c]{.6\textwidth}
+        \begin{tikzpicture}
+            \begin{axis}[
+                xlabel=Number of individuals,
+                ylabel=Execution time (seconds),
+                legend pos=north west,
+            ]
+                \addplot
+                    [blue]
+                    table[x=individuals, y=elapsed, col sep=comma]
+                    {tables/profile_individuals_10000_60000.csv};
+                \addplot
+                    [black, dashed]
+                    table[x=individuals, y expr=-60.0211 + 9.479e-7 * \thisrow{individuals}^2 , col sep=comma]
+                    {tables/profile_individuals_10000_60000.csv};
+                \legend{real, $\bigO(N^2)$}
+            \end{axis}
+        \end{tikzpicture}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[c]{.35\textwidth}
+        \csvreader[
+            tabular=c c,
+            table head=\toprule individuals & exec. time \\ \midrule,
+            table foot=\bottomrule]%
+        {tables/profile_individuals_10000_60000.csv}%
+        {individuals=\individuals, elapsed_latex=\elapsed}%
+        {\num{\individuals} & \elapsed}
+    \end{subfigure}
+    \caption{Execution time when increasing number of individuals}
+    \label{fig:profile_individuals}
+\end{figure}
