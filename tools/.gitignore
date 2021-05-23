@@ -1,0 +1,10 @@
+# Simulation results
+results/
+
+# Generated csv files
+*.csv
+
+# Generated plots and animations
+*.png
+*.mp4
+*.gif
