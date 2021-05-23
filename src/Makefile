@@ -30,21 +30,21 @@ world.o: world.c world.h utils.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 run: $(exec)
-	@mpirun -np 2 $(exec) \
-		-N 10000 \
+	@mkdir -p results
+	@mpirun -np 4 --oversubscribe $(exec) \
+		-N 1000 \
 		-I 100 \
 		-W 2000 \
-		-L 4000 \
-		-w 2000 \
-		-l 2000 \
+		-L 2000 \
+		-w 1000 \
+		-l 1000 \
 		-v 1.4 \
-		-d 2 \
-		--t-infection=$$((1 * 60)) \
-		--t-recovery=$$((1 * 3600)) \
-		--t-immunity=$$((4 * 3600)) \
-		--sim-step=60 \
+		-d 30 \
+		--t-infection=$$((1 * 10)) \
+		--t-recovery=$$((2 * 60)) \
+		--t-immunity=$$((2 * 60)) \
+		--sim-step=1 \
 		--sim-length=1 \
-		--write-trace \
 		--log-level INFO
 
 clean:
