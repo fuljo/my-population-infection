@@ -7,7 +7,7 @@
  * @param[in] country country of the calling process
  * @return FILE* file pointer with write access, NULL if error
  */
-FILE *create_trace_csv(char *directory, int country) {
+FILE *create_trace_csv(const char *directory, int country) {
   char *path = malloc(PATH_MAX * sizeof(char));
   /* Determine the filename and open the file */
   sprintf(path, "%s/trace_%d.csv", directory, country);
@@ -46,7 +46,7 @@ void trace_csv_write_step(FILE *csv, individual_list_t *individuals,
  * @param[in] directory path of the directory where to store the file, not NULL
  * @return FILE* file pointer with write access, NULL if error
  */
-FILE *create_summary_csv(char *directory) {
+FILE *create_summary_csv(const char *directory) {
   char *path = malloc(PATH_MAX * sizeof(char));
   /* Determine the filename and open the file */
   sprintf(path, "%s/summary.csv", directory);

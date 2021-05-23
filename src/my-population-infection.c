@@ -126,7 +126,13 @@ int main(int argc, char **argv) {
         options, parse_opt,
         "-N int -I int -W int -L int -w int -l int"
         " -d float -v float --sim-step seconds --sim-length days ",
-        "A simple model for virus spreading."};
+        "A simple model for virus spreading.\v"
+        "Must be run in an MPI environment where the total number of processes "
+        "is equal to the number of countries (W/w * L/l).\n"
+        "Produces a summary in ./results/summary.csv with the number of "
+        "susceptible, infected and immune individuals at each time step, and a "
+        "file ./results/trace_{country}.csv for each country if the "
+        "--write-trace flag is given."};
 
     /* Read command-line options and arguments */
     struct arguments arguments;
@@ -184,10 +190,13 @@ int main(int argc, char **argv) {
   initialize_individuals(&cfg, num_countries, &susceptible_individuals,
                          &infected_individuals);
 
+  /* Create directory for results */
+  const char res_dir[] = "./results";
+  mkdir(res_dir, 0777);
   /* Open trace file */
   FILE *trace_csv = NULL;
   if (cfg.write_trace) {
-    trace_csv = create_trace_csv("./results", rank);
+    trace_csv = create_trace_csv(res_dir, rank);
   }
 
   /* Prepare structures for summary */
@@ -195,7 +204,7 @@ int main(int argc, char **argv) {
   FILE *summary_csv = NULL;
   summary_t *summaries = NULL;
   if (rank == ROOT_RANK) {
-    summary_csv = create_summary_csv("./results");
+    summary_csv = create_summary_csv(res_dir);
     summaries = malloc(world_size * sizeof(summary_t));
   }
 
