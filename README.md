@@ -3,19 +3,76 @@ A simple model for simulating virus spreading, written in C and MPI. The simulat
 Individuals follow a linear motion, and each country is assigned to a separate MPI process. The spreading distance of the virus, the exposure time to get infected, the duration of the infection and of the immunity can be configured.
 At the end of each simulated day, the program produces a summary with the count of susceptible, infected and immune individuals for each country.
 
-## Requirements
-In order to compile and run the application you will need:
-- `gcc`
-- `openmpi`
-- `make`
-- `openssh-server`
+Read the [project report](/releases/latest/download/mpi_report) for more detailed information.
 
-You can also produce a *Docker* image and run the simulation on different containers with *Docker Compose*.
+## Getting started
+First clone this repo on your local machine:
+```
+git clone https://github.com/fuljo/my-population-infection.git
+cd ./my-population-infection
+```
 
-The tools to produce plots and animations require *Python* and some common python packages (see the scripts for details).
+You can choose to compile and run the project in the local MPI environment, or run it with Docker.
 
-## Usage
-The usage of the program is detailed in the help of the main executable:
+### Compiling and running locally
+1. Install the required dependencies (assuming you are on Ubuntu or Debian):
+    ```
+    apt-get install build-essential gcc gfortran binutils \
+                    openssh libopenmpi-dev
+    ```
+2. Compile the source code:
+    ```
+    cd ./src
+    make
+    ```
+3. Will produce the executable `my-population-infection`
+4. Run the program (see below or run with `--help` for the full list of parameters):
+    ```
+    mpirun -np 4 --oversubscribe ./my-population-infection \
+        -N 1000 \
+        -I 100 \
+        -W 2000 \
+        -L 2000 \
+        -w 1000 \
+        -l 1000 \
+        -v 1.4 \
+        -d 30 \
+        --t-infection=10 \
+        --t-recovery=120 \
+        --t-immunity=120 \
+        --sim-step=1 \
+        --sim-length=1 \
+        --log-level INFO
+    ```
+    Alternatively you can use the `run` target in `src/Makefile`.
+    
+    See the OpenMPI documentation to run the simulation over different computing nodes.
+
+5. Print the summary
+    ```
+    cat ./results/summary.csv | column -t -s,
+    ```
+
+### Using Docker
+Alternatively you can use Docker and Docker Compose to run the simulation, even across different containers, without the need of configuring MPI on your machine.
+
+1. Build the docker image
+    ```
+    make docker
+    ```
+2. Edit the `docker-compose.yml` to set the parameters of the program. Remember that the total number of processes must match the number of countries.
+3. Start the containers:
+    ```
+    make compose
+    ```
+4. Print the summary
+    ```
+    cat ./results/summary.csv | column -t -s,
+    ```
+
+### Parameters
+The simulation parameters are given as command line options to the main executable.
+Here is the output of `my-population-infection --help`:
 ```
 Usage: my-population-infection [OPTION...]
             -N int -I int -W int -L int -w int -l int -d float -v float
@@ -66,39 +123,6 @@ infected and immune individuals at each time step, and a file
 ./results/trace_{country}.csv for each country if the --write-trace flag is
 given.
 ```
-It may be run in standalone mode (directly on the machine) or run inside docker.
-In either case we provide handy commands inside makefiles, see below.
-### Standalone
-1. Compile the source code:
-```
-cd ./src
-make
-```
-
-2. Change the program parameters in the `run` target of `src/Makefile`.
-3. Run the program:
-```
-make run
-```
-4. Print the summary
-```
-cat ./results/summary.csv | column -t -s,
-```
-
-### Docker
-1. Build the docker image
-```
-make docker
-```
-2. Edit the `docker-compose.yml` to set the parameters of the program. Remember that the total number of processes must match the number of countries.
-3. Start the containers:
-```
-make compose
-```
-4. Print the summary
-```
-cat ./results/summary.csv | column -t -s,
-```
 
 ## Tools
 
@@ -107,8 +131,8 @@ Aside from the main program, we provide some complementary tools in the `tools` 
 ### Profiler
 Measures the execution time with a varying number of countries or individuals. Results are written to a csv file.
 ```
-./profile_countries min increment max 
-./profile_individuals min increment max 
+./profile_countries.sh min increment max 
+./profile_individuals.sh min increment max 
 ```
 After this you can produce a `png` plot for each of the csv files by running
 ```
@@ -122,9 +146,9 @@ python3 ./profiler_plot.py
 2. Gather these files together in a single `results` directory (this is done by default if you use our Docker compose setup).
 3. Change the parameters at the end of `trace_animation.py` to match those of your simulation. Setting `t_target=None` will produce a complete animation, but you can use a value in seconds to cut it to the desired (simulated) time.
 4. Produce the animation as a `mp4` video:
-```
-python3 ./trace_animation.py
-```
+    ```
+    python3 ./trace_animation.py
+    ```
 
 ![Animation](/assets/anim_1000.gif)
 
