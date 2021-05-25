@@ -19,7 +19,7 @@ We conclude that the execution time $T$, assuming that all processes run in para
 \subsection{Varying the countries}
 If we fix the number of iterations and of individuals, we expect to get a time complexity of $\bigO(1/C^2)$. In other words, the advantage is that $N$ is split between the countries and only individuals in the same country are checked against each other.
 
-We performed several simulations with \num{30000} individuals in the same $4096 \times 4096$ world, which we split horizontally between 1 and 20 countries. Each simulation spanned a single day with a step of \SI{60}{s} (1440 iterations). The results in figure \ref{fig:profile_countries} agree with our expectations.
+We performed several simulations with \num{30000} individuals in the same $4096 \times 4096$ world, which we split horizontally between 1 and 20 countries. Each simulation spanned a single day with a step of \SI{60}{s} (1440 iterations). The measured execution times in figure \ref{fig:profile_countries} show a quadratic decay, matching our expectations.
 
 \begin{figure}[p]
     \begin{subfigure}[c]{.6\textwidth}
