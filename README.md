@@ -161,7 +161,7 @@ latexmk
 ```
 
 ## Credits
-This project was created as part of the exam for the 2020 edition of the *Middleware Technologies and Distributed System* at Politecnico di Milano.
+This project was created as part of the exam for the 2020 edition of the *Middleware Technologies for Distributed Systems* at Politecnico di Milano.
 
 It contains the 3rd party library [log.c](https://github.com/rxi/log.c), distributed under MIT license.
 

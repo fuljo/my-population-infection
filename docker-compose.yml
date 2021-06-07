@@ -1,6 +1,6 @@
 services:
   mpi_root:
-    image: my-population-infection
+    image: fuljo/my-population-infection
     deploy:
       replicas: 1
     environment:
@@ -32,7 +32,7 @@ services:
       --log-level INFO
 
   mpi_worker:
-    image: my-population-infection
+    image: fuljo/my-population-infection
     depends_on:
       - mpi_root
     deploy:

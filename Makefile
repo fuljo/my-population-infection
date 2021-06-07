@@ -2,7 +2,7 @@ standalone:
 	$(MAKE) -C src
 
 docker: ssh/id_rsa ssh/id_rsa.pub
-	docker build -t my-population-infection .
+	docker build -t fuljo/my-population-infection .
 
 compose:
 	@mkdir -p results
