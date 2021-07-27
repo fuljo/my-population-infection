@@ -1,5 +1,5 @@
 services:
-  mpi_root:
+  mpi-root:
     image: fuljo/my-population-infection
     deploy:
       replicas: 1
@@ -9,8 +9,6 @@ services:
       - "22"
     networks:
       net:
-        aliases:
-          - mpi-root
     volumes:
       - type: bind
         source: ./results
@@ -28,19 +26,17 @@ services:
       --t-recovery=3600 \
       --t-immunity=14400 \
       --sim-step=60 \
-      --sim-length=14 \
+      --sim-length=5 \
       --log-level INFO
 
-  mpi_worker:
+  mpi-worker:
     image: fuljo/my-population-infection
     depends_on:
-      - mpi_root
+      - mpi-root
     deploy:
       replicas: 2
     networks:
       net:
-        aliases:
-          - mpi-worker
     volumes:
       - type: bind
         source: ./results
