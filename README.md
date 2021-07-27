@@ -50,7 +50,7 @@ You can choose to compile and run the project in the local MPI environment, or r
 
 5. Print the summary
     ```
-    cat ./results/summary.csv | column -t -s,
+    column -t -s, ./results/summary.csv
     ```
 
 ### Using Docker
@@ -67,7 +67,7 @@ Alternatively you can use Docker and Docker Compose to run the simulation, even 
     ```
 4. Print the summary
     ```
-    cat ./results/summary.csv | column -t -s,
+    column -t -s, ./results/summary.csv
     ```
 
 ### Parameters
