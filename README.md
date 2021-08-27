@@ -3,7 +3,7 @@ A simple model for simulating virus spreading, written in C and MPI. The simulat
 Individuals follow a linear motion, and each country is assigned to a separate MPI process. The spreading distance of the virus, the exposure time to get infected, the duration of the infection and of the immunity can be configured.
 At the end of each simulated day, the program produces a summary with the count of susceptible, infected and immune individuals for each country.
 
-Read the [project report](/releases/latest/download/mpi_report) for more detailed information.
+Read the [project report](https://github.com/fuljo/my-population-infection/releases/latest/download/mpi_report.pdf) for more detailed information.
 
 ## Getting started
 First clone this repo on your local machine:
@@ -153,7 +153,7 @@ python3 ./profiler_plot.py
 ![Animation](/assets/anim_1000.gif)
 
 ## Report
-A PDF project report describing the program, its design principles and including a performance analysis can be downloaded [here](/releases/latest/download/mpi_report.pdf).
+A PDF project report describing the program, its design principles and including a performance analysis can be downloaded [here](https://github.com/fuljo/my-population-infection/releases/latest/download/mpi_report.pdf).
 Alternatively it can be locally compiled with XeLaTeX:
 ```
 cd report
