@@ -131,8 +131,8 @@ Aside from the main program, we provide some complementary tools in the `tools` 
 ### Profiler
 Measures the execution time with a varying number of countries or individuals. Results are written to a csv file.
 ```
-./profile_countries.sh min increment max 
-./profile_individuals.sh min increment max 
+./profiler_countries.sh min increment max 
+./profiler_individuals.sh min increment max 
 ```
 After this you can produce a `png` plot for each of the csv files by running
 ```
