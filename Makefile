@@ -12,4 +12,5 @@ compose:
 	@docker compose down
 
 ssh/id_rsa ssh/id_rsa.pub:
+	mkdir -p ssh
 	ssh-keygen -C mpiuser@mpi-root -t rsa -b 4096 -f ssh/id_rsa
